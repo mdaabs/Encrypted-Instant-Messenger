@@ -1,6 +1,6 @@
 Messenger Encryption 
 
-Team 7:
+Team 7: AKA 2Scoops
 
 George Bekandy
 Mario Daaboul
