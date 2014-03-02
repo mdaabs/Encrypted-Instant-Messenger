@@ -1,12 +1,12 @@
 Messenger Encryption 
 
-Team 7: AKA 2Scoops
+Team 7: AKA 2Scoops 
 
 George Bekandy
 Mario Daaboul
 Allen Friedman
 Demitrious Jackson
-Jonathan Nguyen
+Jonathan Nguyen (bigjon92)
 Nicole Cote
 
 Project Agreement
