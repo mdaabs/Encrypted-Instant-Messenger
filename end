@@ -1,0 +1,65 @@
+commit b566f6f44ae097cd8b8ad436f58f32db9b535b29
+Author: Jon <Jonathan.vo.nguyen@gmail.com>
+Date:   Tue Mar 4 17:21:28 2014 -0500
+
+    Jon Testing
+
+commit c66c911976c6b6dedff1044f00e55c84a1f596f2
+Author: Mario <mdaabs@gmail.com>
+Date:   Sat Mar 1 21:45:56 2014 -0500
+
+    removed client and server
+
+commit 13b4a273b88382f579956f2516079cc579af539b
+Author: Mario <mdaabs@gmail.com>
+Date:   Sat Mar 1 21:32:46 2014 -0500
+
+    test network
+
+commit d777d95d7b14f49a6fef0226aa5aba4eff813590
+Merge: a565cce dee1adf
+Author: Mario <mdaabs@gmail.com>
+Date:   Sat Mar 1 21:25:41 2014 -0500
+
+    Merge branch 'DEV' of https://github.com/mdaabs/2Scoops
+
+commit a565ccec0b143a166ff3ca9f4e1d67bd172f8202
+Author: Mario <mdaabs@gmail.com>
+Date:   Sat Mar 1 19:27:42 2014 -0500
+
+    test
+
+commit a48f880d429ae1689b0c07b0fe1e2cb52893fb20
+Author: Demitrious <demitrious@ubuntu.(none)>
+Date:   Sat Mar 1 19:09:09 2014 -0500
+
+    team name corrected
+
+commit dee1adfb8b77a2d0bb5e020fe359ccec4b5bc45d
+Merge: 4799c63 9eb169a
+Author: gbekandy <gb3420@gmail.com>
+Date:   Sat Mar 1 19:05:37 2014 -0500
+
+    Merge pull request #1 from mdaabs/master
+    
+    test commit
+
+commit 9eb169a70a2f536298c6e852d867f768efaabf21
+Author: Demitrious <demitrious@ubuntu.(none)>
+Date:   Sat Mar 1 18:53:18 2014 -0500
+
+    test commit
+
+commit 4799c63519445d62466e39d635321d5b9b18ac22
+Author: gbekandy <gb3420@gmail.com>
+Date:   Sat Mar 1 18:05:24 2014 -0500
+
+    Project Agreement
+    
+    DRAFT of Project Agreement
+
+commit aac1b54969610368fd3287c8e475462e9fe50df9
+Author: Mario <mdaabs@gmail.com>
+Date:   Sat Mar 1 17:59:38 2014 -0500
+
+    first commit
