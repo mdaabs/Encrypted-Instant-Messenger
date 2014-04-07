@@ -1,0 +1,19 @@
+#include <openssl/evp.h>
+#include <openssl/pem.h>
+#include <openssl/aes.h>
+#include <openssl/err.h>
+#include <openssl/rand.h>
+
+#ifndef ENCRYPTION_H_
+#define ENCRYPTION_H_
+
+class Encryption {
+public:
+	Encryption();
+	virtual ~Encryption();
+private:
+	static EVP_PKEY *localKeyPair;
+
+};
+
+#endif /* ENCRYPTION_H_ */
