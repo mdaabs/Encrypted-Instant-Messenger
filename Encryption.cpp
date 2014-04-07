@@ -14,41 +14,72 @@ Encryption::Encryption() {
 Encryption::~Encryption() {
 	EVP_PKEY_free(remotePubKey);
 	
-	EVP_CIPHER_CTX_cleanup(rsaEncryptCtx);
-	EVP_CIPHER_CTX_cleanup(aesEncryptCtx);
+	EVP_CIPHER_CTX_cleanup(EncryptRsaCtx);
+	EVP_CIPHER_CTX_cleanup(EncryptAesCtx);
 
-	EVP_CIPHER_CTX_cleanup(rsaDecryptCtx);
-	EVP_CIPHER_CTX_cleanup(aesDecryptCtx);
+	EVP_CIPHER_CTX_cleanup(DecryptRsaCtx);
+	EVP_CIPHER_CTX_cleanup(DecryptAesCtx);
 
-	free(rsaEncryptCtx);
-	free(aesEncryptCtx);
+	free(EncryptRsaCtx);
+	free(EncryptAesCtx);
 	
-	free(rsaDecryptCtx);
-	free(aesDecryptCtx);
+	free(DecryptRsaCtx);
+	free(DecryptAesCtx);
 	
 	free(aesKey);
 	free(aesIV);
 }
 
+int Encryption::EncryptAes(const unsigned char *msg, size_t msgLen, unsigned char **encMsg) {
+	size_t blockLen = 0;
+	size_t encMsgLen = 0;
+	
+	*encMsg = (unsigned char*) malloc(msgLen + AES_BLOCK_SIZE);
+	if (encMsg == NULL) {
+		return FAILURE;
+	}
+	
+	// setting up cipher context for AES CBC encryption
+	if (!EVP_EncryptInit_ex(EncryptAesCtx, EVP_aes_256_cbc(), NULL, aesKey, aesIV)) {
+		return FAILURE;
+	}
+	
+	// encrypts a message of msgLen from msg to encMsg. Bytes written is blockLen
+	if (!EVP_EncryptUpdate(EncryptAesCtx, *encMsg, (int*)&blockLen, (unsigned char*)msg, msgLen)) {
+		return FAILURE;
+	}
+	encMsgLen += blockLen;
+	
+	// uses padding to finish off the remaining message to be encrypted
+	if (!EVP_EncryptFinal_ex(EncryptAesCtx, *encMsg + encMsgLen, (int*)&blockLen)) {
+		return FAILURE;
+	}
+	
+	EVP_CIPHER_CTX_cleanup(EncryptAesCtx);
+	
+	return encMsgLen + blockLen;
+}
+
+// Initializes the keys that are going to be used
 int Encryption::init() {
 	// initialize
-	rsaEncryptCtx = (EVP_CIPHER_CTX*)malloc(sizeof(EVP_CIPHER_CTX));
-	aesEncryptCtx = (EVP_CIPHER_CTX*)malloc(sizeof(EVP_CIPHER_CTX));
+	EncryptRsaCtx = (EVP_CIPHER_CTX*)malloc(sizeof(EVP_CIPHER_CTX));
+	EncryptAesCtx = (EVP_CIPHER_CTX*)malloc(sizeof(EVP_CIPHER_CTX));
 
-	rsaDecryptCtx = (EVP_CIPHER_CTX*)malloc(sizeof(EVP_CIPHER_CTX));
-	aesDecryptCtx = (EVP_CIPHER_CTX*)malloc(sizeof(EVP_CIPHER_CTX));
+	DecryptRsaCtx = (EVP_CIPHER_CTX*)malloc(sizeof(EVP_CIPHER_CTX));
+	DecryptAesCtx = (EVP_CIPHER_CTX*)malloc(sizeof(EVP_CIPHER_CTX));
 
 	// malloc check
-	if (rsaEncryptCtx == NULL || aesEncryptCtx == NULL || rsaDecryptCtx == NULL || aesDecryptCtx == NULL) {
+	if (EncryptRsaCtx == NULL || EncryptAesCtx == NULL || DecryptRsaCtx == NULL || DecryptAesCtx == NULL) {
 		return FAILURE;
 	}
 
 	// Init these here to make valgrind happy
-    	EVP_CIPHER_CTX_init(rsaEncryptCtx);
-    	EVP_CIPHER_CTX_init(aesEncryptCtx);
+    	EVP_CIPHER_CTX_init(EncryptRsaCtx);
+    	EVP_CIPHER_CTX_init(EncryptAesCtx);
  
-    	EVP_CIPHER_CTX_init(rsaDecryptCtx);
-    	EVP_CIPHER_CTX_init(aesDecryptCtx);
+    	EVP_CIPHER_CTX_init(DecryptRsaCtx);
+    	EVP_CIPHER_CTX_init(DecryptAesCtx);
 
 	//init RSA
 	EVP_PKEY_CTX *ctx = EVP_PKEY_CTX_new_id(EVP_PKEY_RSA, NULL);  // create pkey algorithm context for RSA
