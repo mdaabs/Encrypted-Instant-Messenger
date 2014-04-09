@@ -52,7 +52,7 @@ int Encryption::EncryptAes(const unsigned char *msg, size_t msgLen, unsigned cha
 		return FAILURE;
 	}
 	
-	// encrypts a message of msgLen from msg to encMsg. Bytes written is blockLen
+	// encrypts a message of msgLen from msg to encMsg. Number of bytes written in blockLen
 	if (!EVP_EncryptUpdate(EncryptAesCtx, *encMsg, (int*)&blockLen, (unsigned char*)msg, msgLen)) {
 		return FAILURE;
 	}
@@ -73,15 +73,22 @@ int Encryption::DecryptAes(unsigned char *encMsg, size_t encMsgLen, unsigned cha
 	size_t blockLen = 0;
 	
 	*decMsg = (unsigned char*)malloc(encMsgLen);
+	if (*decMsg == NULL) {
+		return FAILURE;
+	}
+	
+	// setting up cipher context for AES CBC decryption
 	if (!EVP_DecryptInit_ex(DecryptAesCtx, EVP_aes_256_cbc(), NULL, aesKey, aesIV)) {
 		return FAILURE;
 	}
 	
+	// decrypts a message of encMsgLen from encMsg to decMsg. Number of bytes written in blockLen.
 	if (!EVP_DecryptUpdate(DecryptAesCtx, (unsigned char*)*decMsg, (int*)&blockLen, encMsg, (int)encMsgLen)) {
 		return FAILURE;
 	}
 	decLen += blockLen;
 	
+	// uses padding to finish off remaining message to be decrypted
 	if (!EVP_DecryptFinal_ex(DecryptAesCtx, (unsigned char*)*decMsg + decLen, (int*)&blockLen)) {
 		return FAILURE;
 	}
@@ -176,3 +183,94 @@ int Encryption::init() {
     	return SUCCESS;
 }
 
+int Encryption::writeKeyToFile(FILE fd, int key) {
+	switch(key) {
+		// write private key in PEM format (certificate)
+		case KEY_SERVER_PRI:
+			if (!PEM_write_PrivateKey(fd, localKeyPair, NULL, NULL, 0, 0, NULL)) {
+				return FAILURE;
+			}
+			break;
+		// write public key for server in PEM format
+		case KEY_SERVER_PUB:
+			if (!PEM_write_PUBKEY(fd, localKeyPair)) {
+				return FAILURE;
+			}
+			break;
+		// write public key for client in PEM format
+		case KEY_CLIENT_PUB:
+			if (!PEM_write_PUBKEY(fd, remotePubKey)) {
+				return FAILURE;
+			}
+			break;
+		// write the aes key to file
+		case KEY_AES:
+			fwrite(aesKey, 1, AES_KEYLEN, fd);
+			break;
+		// write te aes IV to file
+		case KEY_AES_IV:
+			fwrite(aesIV, 1, AES_KEYLEN, fd);
+			break;
+			
+		default:
+			return FAILURE;
+	}
+	return SUCCESS;
+}
+
+int Encryption::getRemotePubKey(unsigned char **pubKey)	{
+	BIO *bio = BIO_new(BIO_s_mem());
+	PEM_write_bio_PUBKEY(bio, remotePubKey);
+	
+	int pubKeyLen = BIO_pending(bio);
+	*pubKey = (unsigned char*)malloc(pubKeyLen);
+	if (pubKey == NULL) {
+		return FAILURE;
+	}
+	
+	BIO_read(bio, *pubKey, pubKeyLen);
+	
+	(*pubKey)[pubKeyLen - 1] = '\0';
+	
+	BIO_free_all(bio);
+	
+	return pubKeyLen;
+}
+
+int Encryption::setRemotePubKey(unsigned char* pubKey, size_t pubKeyLen) {
+	
+	BIO *bio = BIO_new(BIO_s_mem());
+	if (BIO_write(bio, pubKey pubKeyLen) != (int)pubKeyLen) {
+		return FAILURE;
+	}
+	
+	RSA *_pubKey = (RSA*)malloc(sizeof(RSA));
+	if (_pubKey == NULL) {
+		return FAILURE;
+	}
+	
+	PEM_read_bio_PUBKEY(bio, &remotePubKey, NULL, NULL);
+	
+	BIO_FREE_ALL(bio);
+	
+	return SUCCESS;
+}
+
+int Encryption::getLocalPubKey(unsigned char** pubKey) {
+	BIO *bio = BIO_new(BIO_s_mem());
+	PEM_write_bio_PUBKEY(bio, localKeyPair);
+	
+	int pubKeyLen = BIO_pending(bio);
+	*pubKey = (unsigned char*)malloc(pubKeyLen);
+	if (pubKey == NULL) {
+		return FAILURE;
+	}
+	
+	BIO_read(bio, *pubKey, pubKeyLen);
+	
+	(*pubKey)[pubKeyLen - 1] = '\0';
+	
+	BIO_free_all(bio);
+	
+	return pubKeyLen;
+}
