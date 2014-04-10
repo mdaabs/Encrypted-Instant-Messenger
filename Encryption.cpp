@@ -44,23 +44,23 @@ int Encryption::EncryptAes(const unsigned char *msg, size_t msgLen, unsigned cha
 	
 	*encMsg = (unsigned char*) malloc(msgLen + AES_BLOCK_SIZE);
 	if (encMsg == NULL) {
-		return FAILURE;
+		return -1;
 	}
 	
 	// setting up cipher context for AES CBC encryption
 	if (!EVP_EncryptInit_ex(EncryptAesCtx, EVP_aes_256_cbc(), NULL, aesKey, aesIV)) {
-		return FAILURE;
+		return -1;
 	}
 	
 	// encrypts a message of msgLen from msg to encMsg. Number of bytes written in blockLen
 	if (!EVP_EncryptUpdate(EncryptAesCtx, *encMsg, (int*)&blockLen, (unsigned char*)msg, msgLen)) {
-		return FAILURE;
+		return -1;
 	}
 	encMsgLen += blockLen;
 	
 	// uses padding to finish off the remaining message to be encrypted
 	if (!EVP_EncryptFinal_ex(EncryptAesCtx, *encMsg + encMsgLen, (int*)&blockLen)) {
-		return FAILURE;
+		return -1;
 	}
 	
 	EVP_CIPHER_CTX_cleanup(EncryptAesCtx);
@@ -74,23 +74,23 @@ int Encryption::DecryptAes(unsigned char *encMsg, size_t encMsgLen, unsigned cha
 	
 	*decMsg = (unsigned char*)malloc(encMsgLen);
 	if (*decMsg == NULL) {
-		return FAILURE;
+		return -1;
 	}
 	
 	// setting up cipher context for AES CBC decryption
 	if (!EVP_DecryptInit_ex(DecryptAesCtx, EVP_aes_256_cbc(), NULL, aesKey, aesIV)) {
-		return FAILURE;
+		return -1;
 	}
 	
 	// decrypts a message of encMsgLen from encMsg to decMsg. Number of bytes written in blockLen.
 	if (!EVP_DecryptUpdate(DecryptAesCtx, (unsigned char*)*decMsg, (int*)&blockLen, encMsg, (int)encMsgLen)) {
-		return FAILURE;
+		return -1;
 	}
 	decLen += blockLen;
 	
 	// uses padding to finish off remaining message to be decrypted
 	if (!EVP_DecryptFinal_ex(DecryptAesCtx, (unsigned char*)*decMsg + decLen, (int*)&blockLen)) {
-		return FAILURE;
+		return -1;
 	}
 	decLen += blockLen;
 	
@@ -110,7 +110,7 @@ int Encryption::init() {
 
 	// malloc check
 	if (/* EncryptRsaCtx == NULL */ || EncryptAesCtx == NULL || /* DecryptRsaCtx == NULL */ || DecryptAesCtx == NULL) {
-		return FAILURE;
+		return -1;
 	}
 
 	// Init these here to make valgrind happy
@@ -146,7 +146,7 @@ int Encryption::init() {
 	unsigned char *aesSalt = (unsigned char*)malloc(8);
 	
 	if(aesKey == NULL || aesIV == NULL || aesPass == NULL || aesSalt == NULL) {
-		return FAILURE;
+		return -1;
 	}
 
 	// Can use password based key derivation for AES, or random data, this uses
@@ -156,51 +156,51 @@ int Encryption::init() {
 	
 	// Get some random data to use as the AES pass and salt
         if(RAND_bytes(aesPass, AES_KEYLEN/8) == 0) { 
-            return FAILURE;
+            return -1;
         }
 
         if(RAND_bytes(aesSalt, 8) == 0) {
-            return FAILURE;
+            return -1;
         }
      
 	// generate 256 bit key
         if(EVP_BytesToKey(EVP_aes_256_cbc(), EVP_sha256(), aesSalt, aesPass, AES_KEYLEN/8, AES_ROUNDS, aesKey, aesIV) == 0) {
-            return FAILURE;
+            return -1;
         }
     #else
         if(RAND_bytes(aesKey, AES_KEYLEN/8) == 0) {
-            return FAILURE;
+            return -1;
         }
 
         if(RAND_bytes(aesIV, AES_KEYLEN/8) == 0) {
-            return FAILURE;
+            return -1;
         }
     #endif
 
    	free(aesPass);
     	free(aesSalt);
  
-    	return SUCCESS;
+    	return 0;
 }
 
 int Encryption::writeKeyToFile(FILE fd, int key) {
 	switch(key) {
 		// write private key in PEM format (certificate)
-		case KEY_SERVER_PRI:
+		case KEY_SERVER_PRIVATE:
 			if (!PEM_write_PrivateKey(fd, localKeyPair, NULL, NULL, 0, 0, NULL)) {
-				return FAILURE;
+				return -1;
 			}
 			break;
 		// write public key for server in PEM format
 		case KEY_SERVER_PUB:
 			if (!PEM_write_PUBKEY(fd, localKeyPair)) {
-				return FAILURE;
+				return -1;
 			}
 			break;
 		// write public key for client in PEM format
 		case KEY_CLIENT_PUB:
 			if (!PEM_write_PUBKEY(fd, remotePubKey)) {
-				return FAILURE;
+				return -1;
 			}
 			break;
 		// write the aes key to file
@@ -213,9 +213,9 @@ int Encryption::writeKeyToFile(FILE fd, int key) {
 			break;
 			
 		default:
-			return FAILURE;
+			return -1;
 	}
-	return SUCCESS;
+	return 0;
 }
 
 int Encryption::getRemotePubKey(unsigned char **pubKey)	{
@@ -230,7 +230,7 @@ int Encryption::getRemotePubKey(unsigned char **pubKey)	{
 	int pubKeyLen = BIO_pending(bio);
 	*pubKey = (unsigned char*)malloc(pubKeyLen);
 	if (pubKey == NULL) {
-		return FAILURE;
+		return -1;
 	}
 	
 	// reads len from bio into buffer
@@ -252,12 +252,12 @@ int Encryption::setRemotePubKey(unsigned char* pubKey, size_t pubKeyLen) {
 	// check if the content written is the same
 	// length as the pubkey; ensure proper len
 	if (BIO_write(bio, pubKey pubKeyLen) != (int)pubKeyLen) {
-		return FAILURE;
+		return -1;
 	}
 	
 	RSA *_pubKey = (RSA*)malloc(sizeof(RSA));
 	if (_pubKey == NULL) {
-		return FAILURE;
+		return -1;
 	}
 	
 	// read the pubkey
@@ -265,7 +265,7 @@ int Encryption::setRemotePubKey(unsigned char* pubKey, size_t pubKeyLen) {
 	
 	BIO_FREE_ALL(bio);
 	
-	return SUCCESS;
+	return 0;
 }
 
 // same as getRemotePubKey
@@ -278,7 +278,7 @@ int Encryption::getLocalPubKey(unsigned char** pubKey) {
 	int pubKeyLen = BIO_pending(bio);
 	*pubKey = (unsigned char*)malloc(pubKeyLen);
 	if (pubKey == NULL) {
-		return FAILURE;
+		return -1;
 	}
 	
 	BIO_read(bio, *pubKey, pubKeyLen);
@@ -298,7 +298,7 @@ int Encryption::getLocalPrivateKey(unsigned char **privateKey) {
 	int privateKeyLen = BIO_pending(bio);
 	*privateKey = (unsigned char*)malloc(privateKeyLen + 1);
 	if (privateKey == NULL) {
-		return FAILURE;
+		return -1;
 	}
 	
 	BIO_read(bio, *privateKey, privateKeyLen);
@@ -317,7 +317,7 @@ int Encryption::getAesKey(unsigned char **aesKey) {
 
 int Encryption:setAesKey(unsigned char *aesKey, size_t aesKeyLen) {
 	if ((int)aesKeyLen != AES_KEYLEN/8) {
-		return FAILURE;
+		return -1;
 	}
 	
 	memcpy(this->aesKey, aesKey, AES_KEYLEN/8);
@@ -332,12 +332,12 @@ int Encryption::getAesIV(unsigned char **aesIV) {
 
 int Encryption::setAesIV(unsigned char *aesIV, size_t aesIVLen) {
 	if ((int)aesIVLen != AES_KEYLEN/16) {
-		return FAILURE;
+		return -1;
 	}
 	
 	memcpy(this->aesIV, aesIV, AES_KEYLEN/16);
 	
-	return SUCCESS;
+	return 0;
 }
 
 int Encryption::genTestClientKey() {
@@ -345,18 +345,18 @@ int Encryption::genTestClientKey() {
 	EVP_PKEY_CTX *ctx = EVP_PKEY_CITX_new_id(EVP_PKEY_RSA, NULL);
 	
 	if (EVP_PKEY_keygen_init(ctx) <= 0) {
-		return FAILURE;
+		return -1;
 	}
 	
 	if (EVP_PKEY_CTX_set_rsa_keygen_bits(ctx, RSA_KEYLEN) <= 0) {
-		return FAILURE;
+		return -1;
 	}
 	
 	if (EVP_PKEY_keygen(ctx, &remotePubKey) <= 0) {
-		return FAILURE;
+		return -1;
 	}
 	
 	EVP_PKEY_CTX_free(ctx);
 	
-	return SUCCESS;
+	return 0;
 }
