@@ -219,19 +219,27 @@ int Encryption::writeKeyToFile(FILE fd, int key) {
 }
 
 int Encryption::getRemotePubKey(unsigned char **pubKey)	{
+	
+	// BIO is and I/O abstraction in openssl
+	// PEM files contain certificates in them
 	BIO *bio = BIO_new(BIO_s_mem());
 	PEM_write_bio_PUBKEY(bio, remotePubKey);
 	
+	// BIO_pending is number of pending characters
+	// in the read/write of BIO
 	int pubKeyLen = BIO_pending(bio);
 	*pubKey = (unsigned char*)malloc(pubKeyLen);
 	if (pubKey == NULL) {
 		return FAILURE;
 	}
 	
+	// reads len from bio into buffer
 	BIO_read(bio, *pubKey, pubKeyLen);
 	
+	// makes last array member nul terminator
 	(*pubKey)[pubKeyLen - 1] = '\0';
 	
+	// freebird
 	BIO_free_all(bio);
 	
 	return pubKeyLen;
@@ -240,6 +248,9 @@ int Encryption::getRemotePubKey(unsigned char **pubKey)	{
 int Encryption::setRemotePubKey(unsigned char* pubKey, size_t pubKeyLen) {
 	
 	BIO *bio = BIO_new(BIO_s_mem());
+	
+	// check if the content written is the same
+	// length as the pubkey; ensure proper len
 	if (BIO_write(bio, pubKey pubKeyLen) != (int)pubKeyLen) {
 		return FAILURE;
 	}
@@ -249,6 +260,7 @@ int Encryption::setRemotePubKey(unsigned char* pubKey, size_t pubKeyLen) {
 		return FAILURE;
 	}
 	
+	// read the pubkey
 	PEM_read_bio_PUBKEY(bio, &remotePubKey, NULL, NULL);
 	
 	BIO_FREE_ALL(bio);
@@ -256,9 +268,12 @@ int Encryption::setRemotePubKey(unsigned char* pubKey, size_t pubKeyLen) {
 	return SUCCESS;
 }
 
+// same as getRemotePubKey
 int Encryption::getLocalPubKey(unsigned char** pubKey) {
+
 	BIO *bio = BIO_new(BIO_s_mem());
 	PEM_write_bio_PUBKEY(bio, localKeyPair);
+	
 	
 	int pubKeyLen = BIO_pending(bio);
 	*pubKey = (unsigned char*)malloc(pubKeyLen);
@@ -273,4 +288,75 @@ int Encryption::getLocalPubKey(unsigned char** pubKey) {
 	BIO_free_all(bio);
 	
 	return pubKeyLen;
+}
+
+int Encryption::getLocalPrivateKey(unsigned char **privateKey) {
+	BIO *bio = BIO_new(BIO_s_mem());
+	
+	PEM_write_bio_PrivateKey(bio, localKeyPair, NULL, NULL, 0, 0, NULL);
+	
+	int privateKeyLen = BIO_pending(bio);
+	*privateKey = (unsigned char*)malloc(privateKeyLen + 1);
+	if (privateKey == NULL) {
+		return FAILURE;
+	}
+	
+	BIO_read(bio, *privateKey, privateKeyLen);
+	
+	(*privateKey)[privateKeyLen] = '\0';
+	
+	BIO_free_all(bio);
+	
+	return privateKeyLen;
+}
+
+int Encryption::getAesKey(unsigned char **aesKey) {
+	*aesKey = this->aesKey;
+	return AES_KEYLEN/8;
+}
+
+int Encryption:setAesKey(unsigned char *aesKey, size_t aesKeyLen) {
+	if ((int)aesKeyLen != AES_KEYLEN/8) {
+		return FAILURE;
+	}
+	
+	memcpy(this->aesKey, aesKey, AES_KEYLEN/8);
+	
+	return SUCCESS;
+}
+
+int Encryption::getAesIV(unsigned char **aesIV) {
+	*aesIV = this->aesIV;
+	return AES_KEYLEN/16;
+}
+
+int Encryption::setAesIV(unsigned char *aesIV, size_t aesIVLen) {
+	if ((int)aesIVLen != AES_KEYLEN/16) {
+		return FAILURE;
+	}
+	
+	memcpy(this->aesIV, aesIV, AES_KEYLEN/16);
+	
+	return SUCCESS;
+}
+
+int Encryption::genTestClientKey() {
+
+	EVP_PKEY_CTX *ctx = EVP_PKEY_CITX_new_id(EVP_PKEY_RSA, NULL);
+	
+	if (EVP_PKEY_keygen_init(ctx) <= 0) {
+		return FAILURE;
+	}
+	
+	if (EVP_PKEY_CTX_set_rsa_keygen_bits(ctx, RSA_KEYLEN) <= 0) {
+		return FAILURE;
+	}
+	
+	if (EVP_PKEY_keygen(ctx, &remotePubKey) <= 0) {
+		return FAILURE;
+	}
+	
+	EVP_PKEY_CTX_free(ctx);
+	
+	return SUCCESS;
 }
