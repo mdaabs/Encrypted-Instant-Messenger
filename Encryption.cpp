@@ -1,5 +1,7 @@
 #include "Encryption.h"
 
+EVP_PKEY* Encryption::localKeyPair;
+
 Encryption::Encryption() {
 	localKeyPair = NULL;
 	remotePubKey = NULL;
@@ -109,7 +111,7 @@ int Encryption::init() {
 	DecryptAesCtx = (EVP_CIPHER_CTX*)malloc(sizeof(EVP_CIPHER_CTX));
 
 	// malloc check
-	if (/* EncryptRsaCtx == NULL */ || EncryptAesCtx == NULL || /* DecryptRsaCtx == NULL */ || DecryptAesCtx == NULL) {
+	if (/* EncryptRsaCtx == NULL  || */ EncryptAesCtx == NULL || /* DecryptRsaCtx == NULL  || */ DecryptAesCtx == NULL) {
 		return -1;
 	}
 
@@ -136,7 +138,7 @@ int Encryption::init() {
 	} */
 
 	// free context
-	EVP_PKEY_CTX_free(ctx);
+	//EVP_PKEY_CTX_free(ctx);
 
 	// init AES
 	aesKey = (unsigned char*)malloc(AES_KEYLEN/8);
@@ -183,7 +185,7 @@ int Encryption::init() {
     	return 0;
 }
 
-int Encryption::writeKeyToFile(FILE fd, int key) {
+int Encryption::writeKeyToFile(FILE *fd, int key) {
 	switch(key) {
 		// write private key in PEM format (certificate)
 		case KEY_SERVER_PRIVATE:
@@ -251,7 +253,7 @@ int Encryption::setRemotePubKey(unsigned char* pubKey, size_t pubKeyLen) {
 	
 	// check if the content written is the same
 	// length as the pubkey; ensure proper len
-	if (BIO_write(bio, pubKey pubKeyLen) != (int)pubKeyLen) {
+	if (BIO_write(bio, pubKey, pubKeyLen) != (int)pubKeyLen) {
 		return -1;
 	}
 	
@@ -263,7 +265,7 @@ int Encryption::setRemotePubKey(unsigned char* pubKey, size_t pubKeyLen) {
 	// read the pubkey
 	PEM_read_bio_PUBKEY(bio, &remotePubKey, NULL, NULL);
 	
-	BIO_FREE_ALL(bio);
+	BIO_free_all(bio);
 	
 	return 0;
 }
@@ -315,14 +317,14 @@ int Encryption::getAesKey(unsigned char **aesKey) {
 	return AES_KEYLEN/8;
 }
 
-int Encryption:setAesKey(unsigned char *aesKey, size_t aesKeyLen) {
+int Encryption::setAesKey(unsigned char *aesKey, size_t aesKeyLen) {
 	if ((int)aesKeyLen != AES_KEYLEN/8) {
 		return -1;
 	}
 	
 	memcpy(this->aesKey, aesKey, AES_KEYLEN/8);
 	
-	return SUCCESS;
+	return 0;
 }
 
 int Encryption::getAesIV(unsigned char **aesIV) {
@@ -342,7 +344,7 @@ int Encryption::setAesIV(unsigned char *aesIV, size_t aesIVLen) {
 
 int Encryption::genTestClientKey() {
 
-	EVP_PKEY_CTX *ctx = EVP_PKEY_CITX_new_id(EVP_PKEY_RSA, NULL);
+	EVP_PKEY_CTX *ctx = EVP_PKEY_CTX_new_id(EVP_PKEY_RSA, NULL);
 	
 	if (EVP_PKEY_keygen_init(ctx) <= 0) {
 		return -1;
