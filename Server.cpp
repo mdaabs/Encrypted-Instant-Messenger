@@ -5,7 +5,7 @@
  *
  *	Compile Instructions: Standard g++
  *	g++ Server.cpp -lpthread -o Server
- *	g++ -pthread -o Server Server.cpp
+ *
  *
  *	Runtime Instructions: ./Server <Host Port>
  *
@@ -230,5 +230,7 @@ int main(int argc, char * argv[]){
 		pthread_create(&thread, NULL, parseData, &clientSocket);
 		threadCount++;
 	}
+
+
 return 0;
 }
