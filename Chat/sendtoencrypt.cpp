@@ -1,0 +1,25 @@
+#include "sendtoencrypt.h"
+
+void sendToEncrypt::sendToEncrypter(string message)
+{
+    string nowencrypted;
+    nowencrypted=encryptMessage(message);
+    sendOverInternet(nowencrypted);
+
+}
+string sendToEncrypt::encryptMessage(string x){
+
+    //function to encrypt string x
+    /*
+
+
+      */
+    return x;
+
+}
+void sendToEncrypt::sendOverInternet(string encrypted){
+
+    //function to send over internet
+
+
+}

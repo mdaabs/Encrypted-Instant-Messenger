@@ -1,0 +1,36 @@
+
+QString MainWindow::getmessage(){
+    QString recmsg;
+    recmsg=ui->message->toPlainText();
+    ui->message->clear();
+    return recmsg;
+    //ui->message->clear();
+   // ui->convos=recmsg;
+
+
+}
+
+
+void MainWindow::sendmessage(){
+    QString msg=username;
+
+
+   msg.append(getmessage());
+   updateconvo(msg);
+
+}
+void MainWindow::updateconvo(QString addmsg){
+    QString longword;
+    /*if
+    for(int i=0; i<addmsg.size();i++)
+    */
+    int position= ui->convo->count() +1;
+    ui->convo->insertItem(position,addmsg);
+
+    /*string sendstr=addmsg.toStdString();
+    ofstream convofile;
+    convofile.open("/home/george/Messenger/Chat/convo.txt", ios::app);
+    convofile<<sendstr<<'\n';
+    convofile.close();
+*/
+}
