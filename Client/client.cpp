@@ -1,3 +1,19 @@
+/********************************************************
+*
+* CS 410
+* Encrypted Instant Messenger
+* Team 7, #2scoops
+*
+* File: client.cpp
+*
+* Set up communication for the client with the server.
+*
+* Compile: g++ client.cpp -o client
+*
+* Run: ./client 8080 
+*
+********************************************************/
+
 #include <arpa/inet.h>
 #include <errno.h>
 #include <netdb.h>
