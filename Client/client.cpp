@@ -30,8 +30,8 @@ using namespace std;
 bool connect(string serverIP, unsigned short port);
 void sendUsername(string username, int server);
 void sendPassword(string password, int server);
-void sendkey(char *key, int server);
-void getkey();
+//void sendsalt(char *salt, int server);
+//void getkey();
 
 int main()
 {
@@ -81,12 +81,12 @@ void sendPassword(string password, int server) {
     recv(server,passwordBuff,BUFSIZE,0);
 }
 
-void sendkey(char *key, int server) {
-    key = new char[BUFSIZE+1];
-    send(server, key.c_str(), key.length(), 0);
-    memset(key,0,BUFSIZE);
-    recv(server,key,BUFSIZE,0);
-}
+/*void sendsalt(char *salt, int server) {
+    salt = new char[BUFSIZE+1];
+    send(server, salt.c_str(), salt.length(), 0);
+    memset(salt,0,BUFSIZE);
+    recv(server,salt,BUFSIZE,0);
+}*/
 
 /*void sendlogin(string username, string password, int server){
     char* usernameBuff = new char[BUFSIZE+1];
