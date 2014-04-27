@@ -32,3 +32,4 @@ void sendkey(char *key, int server);
 void getkey();
 
 #endif
+ 
