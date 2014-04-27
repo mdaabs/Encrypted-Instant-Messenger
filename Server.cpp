@@ -93,7 +93,7 @@ printf("%d", nbyte);
      
      if( sqlite3_step( stmt ) != SQLITE_OK)
      {
-      fprintf(stdout, "Step failed I repeat step failed\n");
+      fprintf(stdout, "Step failed I repeat step failed2\n");
       sqlite3_close(db);
       return false;
      }
@@ -206,7 +206,7 @@ bool validateUserInDatabase(std::string username, std::string password){
 
      if( thestep != SQLITE_ROW)
      {
-      fprintf(stdout, "Step failed I repeat step failed\n");
+      fprintf(stdout, "Step failed I repeat step failedz\n");
       sqlite3_close(db);
       return false;
      }
@@ -260,8 +260,9 @@ void *parseData(void *clsk){
 	std::string decipheredMessage;
 	decipheredMessage=decryptIncomingMessage(encryptedMessage);
 	messagetype action=parseMessage(decipheredMessage);
-	std::string username="hardcoded username";
-	std::string password="hardcoded password";
+	std::string username="demi";
+	std::string password="ff7";
+  std::string salt="hardcoded salt";
 	switch (action){
 		case LOGIN:{
 			std::string loginattempt;
@@ -284,7 +285,7 @@ void *parseData(void *clsk){
 		}
 		case CHANGEPASSWORD:{
 			std::string changepassmessage;
-			if(validateUserInDatabase("hardcodedname", "hardcodedpassword")){
+			if(validateUserInDatabase(username, password)){
 				std::cout<<"user validated"<<std::endl;
 				//MARIO
 				//add methods to hash a new password,
@@ -305,8 +306,8 @@ void *parseData(void *clsk){
 			break;
 		}
 		case ADDUSER:{
-			if(!userInDatabase(username, password)){
-				addUserToDatabase(username, password);
+			if(!userInDatabase(username)){
+				addUserToDatabase(username, password, salt);
 			}
 		break;
 		}
