@@ -1,6 +1,6 @@
 /*
  *	Server.cpp
- *	v. 0.1
+ *	v. 0.3
  *	#2scoopz
  *
  *	Compile Instructions: Standard g++
