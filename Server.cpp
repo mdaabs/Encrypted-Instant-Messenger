@@ -150,7 +150,7 @@ void LogUserOff(std::string username){
 
 std::string LogUserOn(std::string input, int *client_socket){
 	//std::string delimiter="=";
-	std::string username=input.substr(input.find(equal_delimiter)+1);
+	std::string username=input.substr(input.find(equal_delimiter)+(equal_delimiter.length()));
 	std::cout<<"mutex locking"<<std::endl;
 	
 	pthread_mutex_lock(&mutex);
