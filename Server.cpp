@@ -4,25 +4,33 @@
  *	#2scoopz
  *
  *	Compile Instructions: Standard g++
- *	g++ Server.cpp -lpthread -o Server
+ *	g++ Server3.cpp -std=gnu++0x -lpthread -w -o Server3
+
  *
  *
  *	Runtime Instructions: ./Server <Host Port>
  *
- *	To Do:
- *	Create a user class that has:
- *	string for username, string for a hashed password, bool for online or not
- *	server main should contain a vector/dynamic array of users online
+ *	LOGIN=username
+ *	SENDMESSAGE=TO:theirname*MESSAGE:message
  *
- *	JSON 
+ *
+ *	To Do:
+ *	needs dynamic user messages. gonna have to parse input string better
+ *	error handling
+ *	
+ *	 
  *	plug in w. other parts
- *	chat
  *	safe/clean exits
  *	
- *	
+ *
+ *	can use pthread_detach(pthread_self()) at user logoff to detach thread
+ *	and/or can use pthread_exit()
+ *
+ *	close(clientSocket); upon logoff request
+ *
  *
  *	BUG LIST:
- *	
+ *	everything
  *	
  *	
  */
@@ -49,19 +57,32 @@
 #include <fstream>
 #include <vector>
 #include <string>
+//C++ Standard data structures (included in std namespace)
 #include <map>
+#include <queue>
+//Deprecated- may need to patch in the future
+#include <unordered_map>
 
+//#include <mutex>
 //C++ Networking Libraries
 #include <sstream>
 #include <iomanip>
 
 #include "User.h"
 
-#define MAXINCOMINGCLIENTS 10
+//HARDWARE DEPENDANT
+#define MAXINCOMINGCLIENTS 50
 #define BUFFERSIZE 256
 
-std::map<std::string, bool> logged_in_users;
-std::map<std::string, int> username_sockets;
+
+std::unordered_map<std::string, int*> *username_sockets=new std::unordered_map<std::string, int*>();
+pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+std::string to_delimiter="TO:";
+std::string from_delimiter="FROM:";
+std::string message_delimiter="MESSAGE:";
+std::string star_delimiter="*";
+std::string equal_delimiter="=";
+int zombie_threads=0;
 
 
 enum messagetype {
@@ -70,189 +91,176 @@ enum messagetype {
 	LOGIN,
 	LOGOFF,
 	SENDMESSAGE,
-	DEFAULT
+	INVALID
 };
-	
-
-//DEMITRIOUS FILL IN HERE
-bool addUserToDatabase(std::string username, std::string password){
-	return true;
-}
-
-//DEMITRIOUS FILL IN HERE
-bool userInDatabase(std::string username, std::string password){
-	return true;
-}
-
-
-//DEMITRIOUS FILL IN HERE
-bool validateUserInDatabase(std::string username, std::string password){
-	return true;
-}
-
 
 //MARIO FILL IN HERE
-//Needs to be rewritten for JSON parsing
-std::string decryptIncomingMessage(std::string encryptedMessage){
-	return "inbound message";
+std::string DecryptInput(std::string input){
+
+		
+	return input;
+}
+
+std::string GetMessage(std::string input){
+
+	std::string message=input.substr(input.find(message_delimiter)+(message_delimiter.length()));
+	std::cout<<"message is: "<<message<<std::endl;
+	return message;
 }
 
 
-//Needs to be rewritten for JSON parsing
+std::string GetMessageReceiver(std::string input){
 
-messagetype parseMessage(std::string decryptedMessage){
-	if(!decryptedMessage.find("LOGIN"))
-		return LOGIN;
-	else if(!decryptedMessage.find("SENDMESSAGE"))
-		return SENDMESSAGE;
+	std::string receiver=input.substr(input.find(to_delimiter)+(to_delimiter.length()));
+	receiver=receiver.substr(0,receiver.find(star_delimiter));
+	//receiver=receiver.substr(0,receiver.find(message_delimiter));
+	//receiver=input.substr(input.find(to_delimiter)+1);
+	std::cout<<"receiver is: "<<receiver<<std::endl;
+	return receiver;
+}
+
+bool IsUserOnline(std::string username){
+ 	std::unordered_map<std::string,int *>::const_iterator contains=username_sockets->find(username);
+	if(contains!=username_sockets->end())
+		return true;
 	else
-		return DEFAULT;
+		return false;
+}
+
+//IF at() is called and doesn't exist, shit goes HAM
+//THROWS: terminate called after throwing an instance of 'std::out_of_range' what():  _Map_base::at
+
+//need to error handle
+
+void SendMessage(std::string sender, std::string receiver, std::string message){
+	int *receiver_socket=username_sockets->at(receiver);
+	write(*receiver_socket, message.c_str(), sizeof(message));
+
+}
+
+void LogUserOff(std::string username){
+	std::cout<<"logoff called for "<<username<<std::endl;
+	std::cout<<"mutex locking"<<std::endl;
+	pthread_mutex_lock(&mutex);
+	username_sockets->erase(username);
+	pthread_mutex_unlock(&mutex);
+	std::cout<<"mutex released"<<std::endl;
+	std::cout<<"removed user: "<<username<<std::endl;
+}
+
+std::string LogUserOn(std::string input, int *client_socket){
+	//std::string delimiter="=";
+	std::string username=input.substr(input.find(equal_delimiter)+1);
+	std::cout<<"mutex locking"<<std::endl;
 	
+	pthread_mutex_lock(&mutex);
+	username_sockets->insert(std::map<std::string, int*>::value_type(username, client_socket));
+	pthread_mutex_unlock(&mutex);
+	std::cout<<"mutex released"<<std::endl;
+	std::cout<<"logged user: "<<username<<" online"<<std::endl;
+	//std::cout<<"user is on port address: "<<&(username_sockets["username"])<<std::endl; 
+	return username;
 }
 
-/*std::string stringbreakdown(std::string messageinstruct)
-{
-    std::string array[6];
-    int startpoint = 0;
-    int stoppoit = 0;
-    int i, k;
-    k = 0;
-    for(i = 0; i < messageinstruct.length(); i++)
-    {
-        if(messageinstruct.at(i) == ':')
-        {
-            array[k] = messageinstruct.substr(startpoint, stoppoit);
-            std::cout << array[k] << '\n';
-            k++;
-        }
+//ONLY SUPPORTING LOGIN, LOGOFF AND SENDMESSAGE
+messagetype ParseData(std::string input){
 
-        if(messageinstruct.length() == i + 1)
-                {
-                    array[k] = messageinstruct.substr(startpoint, stoppoit + 1);
-                    std::cout << array[k] << '\n';
-                    k++;
-                }
-        stoppoit++;
-
-        if(messageinstruct.at(i) == ':')
-        {
-            startpoint += stoppoit;
-            stoppoit = 0;
-        }
-    }
-
-        return array;
-}*/
-
-void sendMessage(int &clientSocket){
-
-
-}
-
-//Needs to be rewritten for JSON parsing
-//function will serve as the main for each thread
-//methods called in an upwards fashion
-void *parseData(void *clsk){
-	bool running=true;
-	while(running){
-	char messageBuffer[BUFFERSIZE];
-
-	std::cout<<"Successful thread, listening to client: "<<*((int*)clsk)<<std::endl;
-	int clientSocket=*((int*)clsk);
-	memset(messageBuffer,0,sizeof(messageBuffer));
-	read(clientSocket, messageBuffer, BUFFERSIZE);
-	std::string decipheredMessage (messageBuffer);
-	//std::string encryptedMessage (messageBuffer);
-	//std::string decipheredMessage;
-	//decipheredMessage=decryptIncomingMessage(encryptedMessage);
-	std::cout<<decipheredMessage<<std::endl;
-	messagetype action=parseMessage(decipheredMessage);
-	std::string delimiter = "=";
-	std::string username = decipheredMessage.substr(decipheredMessage.find(delimiter)+1);
-	std::cout<<username<<std::endl;
-	//std::string username="hardcoded username";
-	std::string password="hardcoded password";
-
-	//std::string usernametest="hardcoded username1";
-	//std::string passwordtest="hardcoded password1";
-	//User* testclient=new User(username1, true1);
-	//username_sockets.insert(std::map<std::string, int>::value_type(usernametest, clientSocket));
-
-	switch (action){
-		case LOGIN:{
-			std::string loginattempt;
-			if(validateUserInDatabase(username, password)){
-				std::cout<<"user validated"<<std::endl;
-				//will add a user class
-				//then change bool loggedon to true
-				User* client=new User(username, true);
-			username_sockets.insert(std::map<std::string, int>::value_type(username, clientSocket));
-			std::cout<<"client is "<<username_sockets["username"]<<std::endl;
-			loginattempt="successful login";
-			//parseData((void*)clientSocket);
-			//write(clientSocket,&loginattempt ,sizeof(loginattempt));
-			//sendMessage(clientSocket);
-			//exit(1);
-			break;
-			}
-			else{
-				std::cout<<"invalid credentials"<<std::endl;
-				loginattempt="failed login";
-				write(clientSocket,&loginattempt ,sizeof(loginattempt));
-				close(clientSocket);
-				break;
-			}		
-			break;
-		}
-		case CHANGEPASSWORD:{
-			std::string changepassmessage;
-			if(validateUserInDatabase("hardcodedname", "hardcodedpassword")){
-				std::cout<<"user validated"<<std::endl;
-				//MARIO
-				//add methods to hash a new password,
-				//DEMETRIOUS
-				//rewrtie new hashed pass into the database
-				//user remains logged off
-				changepassmessage="password changed";
-				write(clientSocket,&changepassmessage ,sizeof(changepassmessage));
-				break;
-			}
-			else{
-				std::cout<<"invalid credentials"<<std::endl;
-				//user remains logged off
-				changepassmessage="failed to change password";
-				write(clientSocket,&changepassmessage ,sizeof(changepassmessage));
-				break;
-			}		
-			break;
-		}
-		case ADDUSER:{
-			if(!userInDatabase(username, password)){
-				addUserToDatabase(username, password);
-			}
-		break;
-		}
-		case SENDMESSAGE:{
-		//std::string tosend="sending"
-			//if(logged_in_users["username"]){
-//				write(username_sockets["username"],&tosend,sizeof(tosend));
-//
-//			}
-		break;
-		}
-
-		default:{
-		break;
-		}
+	std::string action=input.substr(0, input.find(equal_delimiter));
+	if(action.compare("LOGIN")==0){
+	std::cout<<"login"<<std::endl;
+		return LOGIN;
 	}
+	if(action.compare("LOGOFF")==0){
+	std::cout<<"logoff"<<std::endl;
+		return LOGOFF;
+	}
+	if(action.compare("SENDMESSAGE")==0){
+	std::cout<<"message"<<std::endl;
+		return SENDMESSAGE;
+	}
+	else
+		return INVALID;
+
 }
+	//mutex for adding to map
+	/*pthread_mutex_lock(&mutex);
+	username_sockets.insert(std::map<std::string, int>::value_type(username, client_socket));
+	pthread_mutex_unlock(&mutex);*/
+	
+void *ThreadMain(void *clsk){
+
+	char buffer[BUFFERSIZE];
+	std::string username;
+	//std::string* nameptr=&username;
+	//pthread_detach(pthread_self());
+	int client_socket=*((int*)clsk);
+	std::cout<<"Successful thread, listening to client: "<<*((int*)clsk)<<std::endl;
+	bool listening=true;
+	while(listening){
+	std::cout<<"Recieving input"<<std::endl;
+	memset(buffer,0,BUFFERSIZE);
+	read(client_socket, buffer, BUFFERSIZE);
+	std::cout<<"Successfully received message"<<std::endl;
+	std::string input(buffer);
+	std::cout<<"decrypting input..."<<std::endl;
+	//input=DecryptInput(input);	//waiting for mario's code.
+	std::cout<<"converting message type"<<std::endl;
+	messagetype action=ParseData(input);
+
+	std::string receiver;
+	std::string message;
+
+	switch(action){
+		case LOGIN:
+			//add validation code
+			username=LogUserOn(input, &client_socket);
+			//*nameptr=LogUserOn(input, &client_socket);
+			std::cout<<username<<std::endl;
+			//std::cout<<*nameptr<<std::endl;
+
+			break;
+
+		
+		case LOGOFF:
+			//add validation code
+		//	std::cout<<"checking for "<<*nameptr<<std::endl;
+			std::cout<<IsUserOnline(username)<<std::endl;
+		//	username=LogUserOn(input, &client_socket);
+			std::cout<<"checking for "<<username<<std::endl;
+		//	std::cout<<IsUserOnline(username)<<std::endl;
+			LogUserOff(username);
+			std::cout<<IsUserOnline(username)<<std::endl;
+			close(client_socket);
+			listening=false;
+			break;
+		
+		case SENDMESSAGE:
+			//add validation code
+
+			receiver=GetMessageReceiver(input);
+			message=GetMessage(input);
+			SendMessage(username, receiver,message);
+	
+		default:
+			break;
+		
+
+		}
+
+	
+	}	
+	zombie_threads++;
+	pthread_exit(0);
+
+
+
 }
 
 int main(int argc, char * argv[]){
-	int serverSocket, clientSocket;
-	struct sockaddr_in serverAddress, clientAddress;
-	unsigned short serverPort;
-	unsigned int addressLength;
+	int server_socket, client_socket;
+	struct sockaddr_in server_address, client_address;
+	unsigned short server_port;
+	unsigned int address_length;
 
 
 	//Check for argument size
@@ -263,56 +271,60 @@ int main(int argc, char * argv[]){
 	}
 
 
-	serverPort = atoi(argv[1]);
-	std::cout<<"Hosting on port: "<<serverPort<<std::endl;
+	server_port = atoi(argv[1]);
+	std::cout<<"Hosting on port: "<<server_port<<std::endl;
 
 
-   	if((serverPort > 65535) || (serverPort < 2000)){
+   	if((server_port > 65535) || (server_port < 2000)){
       		std::cerr << "Please enter a port number between 2000 - 65535" << std::endl;
     		exit(-1);
    	}
 
 	//create socket
 
-	serverSocket = socket( PF_INET, SOCK_STREAM, IPPROTO_TCP );
-	if (serverSocket<0){
+	server_socket = socket( PF_INET, SOCK_STREAM, IPPROTO_TCP );
+	if (server_socket<0){
 		std::cerr<<"Failed to create socket"<<std::endl;
 		exit(-1);
 	}
 
 
-	std::cout<<"Using socket: "<<serverSocket<<std::endl;
+	std::cout<<"Using socket: "<<server_socket<<std::endl;
 
-	memset(&serverAddress, 0, sizeof(serverAddress));
-	serverAddress.sin_family=AF_INET;			//basic address family protocol
-	serverAddress.sin_addr.s_addr=htonl(INADDR_ANY);	//take any incoming interface
-	serverAddress.sin_port=htons(serverPort);		//local port
+	memset(&server_address, 0, sizeof(server_address));
+	server_address.sin_family=AF_INET;			//basic address family protocol
+	server_address.sin_addr.s_addr=htonl(INADDR_ANY);	//take any incoming interface
+	server_address.sin_port=htons(server_port);		//local port
 
 
 	//bind socket to port
 	std::cout<<"Binding socket to port"<<std::endl;
-	if(bind(serverSocket, (struct sockaddr*) &serverAddress, sizeof(serverAddress))<0){
+	if(bind(server_socket, (struct sockaddr*) &server_address, sizeof(server_address))<0){
         	std::cerr << "Cannot bind to socket" << std::endl;
        		exit (-1);
     	}
 	//Listen for incoming connections
 	std::cout<<"listen on port"<<std::endl;
-	if(listen(serverSocket, MAXINCOMINGCLIENTS)<0){
+	if(listen(server_socket, MAXINCOMINGCLIENTS)<0){
 		std::cerr<<"failed to listen for connections"<<std::endl;
        		exit (-1);
 	}
 
+
 	bool finished=false;
-	int threadCount=0;
+	int thread_count=0;
 	//Loops for clients, then threads off
 	while(!finished){
-		clientSocket=accept(serverSocket, (struct sockaddr *) &clientAddress, &addressLength);
+		client_socket=accept(server_socket, (struct sockaddr *) &client_address, &address_length);
 		pthread_t thread;
-		pthread_create(&thread, NULL, parseData, &clientSocket);
-		threadCount++;
+		pthread_create(&thread, NULL, ThreadMain, &client_socket);
+		thread_count++;
 
 	}
 
 
+
+
 return 0;
 }
+
