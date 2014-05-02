@@ -1,27 +1,25 @@
 #include <stdio.h>
 #include <iostream>
+#include <fstream>
 #include <string>
 
-#include "b64.h"
+//#include "b64.h"
 #include "Encryption.h"
+#define PRINT_KEYS
 
 using namespace std;
 
 int main() {
-	Encryption crypto;
+  Encryption crypto;
 
-	#ifdef PRINT_KEYS
-		crypto.writeKeyToFile(stdout, KEY_SERVER_PRIVATE);
-		crypto.writeKeyToFile(stdout, KEY_SERVER_PUB);
-		crypto.writeKeyToFile(stdout, KEY_CLIENT_PUB);
-
-		unsigned char *aesKey;
-		size_t aesLength = crypto.getAesKey(&aesKey);
-		printf("AES Key: ");
-		for (unsigned int i = 0; i < aesLength, i++) {
-			printf("%x", aesKey[i]);
+#ifdef PRINT_KEYS
+	unsigned char *aesKey;
+	//crypto.writeKeyToFile(stdout, KEY_AES);
+	size_t aesLength = crypto.getAesKey(&aesKey);
+	printf("AES Key: ");
+	for (unsigned int i = 0; i < aesLength; i++) {
+		  printf("%x", aesKey[i]);
 		}
-
 		printf("\n");
 	#endif
 
@@ -31,12 +29,10 @@ int main() {
 	int encMsgLen;
 	int decMsgLen;
 
-/*
 	unsigned char *ek;
 	unsigned char *iv;
 	size_t ekl;
 	size_t ivl;
-*/
 
 	while (!cin.eof()) {
 		// AES message encryption
