@@ -52,8 +52,16 @@ messagetype ReceiveAction(){
 
 
 
-
 }*/
+
+bool SendMesage(std::string message, int* socket){
+
+	if(write(*socket, message.c_str(), sizeof(message))<0)
+		return true;
+	else
+		return false;
+}
+
 
 //int main (int argc, char* argv[])
 int *ConnectClient(std::string IP, std::string port)
