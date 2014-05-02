@@ -56,9 +56,10 @@ messagetype ReceiveAction(){
 }*/
 
 //int main (int argc, char* argv[])
-int ConnectClient(std::string IP, std::string port)
+int *ConnectClient(std::string IP, std::string port)
 {
-	int server_socket, client_socket, connection;
+	int server_socket,  connection;
+	int *client_socket=new int;
 	struct sockaddr_in server_address, client_address;
 	unsigned short server_port;
 	unsigned int address_length;
@@ -81,9 +82,10 @@ int ConnectClient(std::string IP, std::string port)
    	}
 
 	//create socket
-
-	client_socket = socket( PF_INET, SOCK_STREAM, IPPROTO_TCP );
-	int *socketptr=&client_socket;
+	*client_socket=socket( PF_INET, SOCK_STREAM, IPPROTO_TCP );
+	//*client_socket = clsk;
+	
+	//int *socketptr=(int*)malloc(client_socket);
 	if (client_socket<0){
 		std::cerr<<"Failed to create socket"<<std::endl;
 		exit(-1);
@@ -98,16 +100,17 @@ int ConnectClient(std::string IP, std::string port)
 	client_address.sin_port=htons(server_port);		//local port
 
 
-	connection = connect(client_socket,(struct sockaddr *) &client_address, sizeof(client_address));
+	connection = connect(*client_socket,(struct sockaddr *) &client_address, sizeof(client_address));
 	if(connection<0){
 		std::cerr<<"failed to connect to server"<<std::endl;
 		exit(-1);
 	}
-
+	
 	//UserAction(&client_socket)
 
-
-return *socketptr;
+	std::cout<<"address is: "<<&client_socket<<std::endl;
+//return socketptr;
+	return client_socket;
 }
 
 
