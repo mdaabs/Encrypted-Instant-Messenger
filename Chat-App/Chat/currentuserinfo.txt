@@ -1,0 +1,57 @@
+#define Delim '.'
+
+splitter(string ip){
+    int first;
+    int second;
+    int third;
+    int fourth;
+
+    string temp;
+
+    int i=0;
+    int j=0;
+
+    for(i=0;i<ip.length();i++){
+        if(ip.at(i)==Delim){
+        temp=ip.substr(j,i);
+
+        i++;
+        j=i;
+        break;
+
+        }
+
+    }
+    first=atoi(temp.c_str());
+
+    for(i;i<ip.length();i++){
+        if(ip.at(i)==Delim){
+        temp=ip.substr(j,i);
+
+        i++;
+        j=i;
+        break;
+
+        }
+
+    }
+    second=atoi(temp.c_str());
+
+    for(i;i<ip.length();i++){
+        if(ip.at(i)==Delim){
+        temp=ip.substr(j,i);
+
+        i++;
+        j=i;
+        break;
+
+        }
+
+    }
+    third=atoi(temp.c_str());
+
+    temp=ip.substr(j);
+    fourth=atoi(temp.c_str());
+
+
+}

@@ -1,0 +1,10 @@
+allen|t
+mario|f
+coco|t
+Demitri|t
+jon|f
+Pomplun|t
+Vin Diesel|t
+Dom Torreto|f
+
+
