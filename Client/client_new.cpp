@@ -87,7 +87,7 @@ int *connectClient(string IP, string port)
 }
 
 bool sendLogin(string login, int *socket) {
-    if(write(*socket, login.c_str(), sizeof(login)) < 0) {
+    if(write(*socket, login.c_str(), login.size()) < 0) {
     	cerr << "Failed to send login" << endl;
     	return false;
     } else
@@ -108,7 +108,7 @@ bool receiveLogin(int *socket) {
 
 bool sendMessage(string message, int* socket){
 
-	if(write(*socket, message.c_str(), sizeof(message))<0) {
+	if(write(*socket, message.c_str(), message.size())<0) {
 		cerr << "Failed to send user message" << endl;
 		return false;
 	} else
@@ -124,7 +124,7 @@ string receiveMessage(int *socket) {
     return messageBuf;
 }
 
-int main()
+/*int main()
 {
     //connect("127.0.0.1", 8080);
-}
+}*/
