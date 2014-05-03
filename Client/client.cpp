@@ -35,7 +35,7 @@ void sendPassword(string password, int server);
 
 int main()
 {
-//    connect("127.0.0.1", 8080);
+    connect("127.0.0.1", 8080);
 }
 
 bool connect(string serverIP, unsigned short port){
