@@ -26,6 +26,7 @@
 #include <stdlib.h>
 #include <string>
 #include "client.h"
+#include <arpa/inet.h>
 #define BUFSIZE 256
 
 using namespace std;
@@ -43,26 +44,30 @@ messagetype ReceiveAction(){
 	return LOGIN;
 }*/
 
-int *connectToServer(string IP, string port)
+int *connectToServer(string serverIP, string port)
 {
 	unsigned short server_port;
 	unsigned int address_length;
+
+	char *IP = new char[serverIP.size() + 1];
+    copy(serverIP.begin(), serverIP.end(), IP);
+    IP[serverIP.size()] = '\0';
 
 	//Display the hosting port number
 	server_port=atoi(port.c_str());
 	cout << "Hosting on port: " << server_port << endl;
 
 
-   	if((server_port > 65535) || (server_port < 2000)){
+/*   	if((server_port > 65535) || (server_port < 2000)){
       		cerr << "Please enter a port number between 2000 - 65535" << endl;
     		exit(-1);
-   	}
+   	}*/
 
 	// setup socket address structure
     struct sockaddr_in server_addr;
     memset(&server_addr,0,sizeof(server_addr));
     server_addr.sin_family = AF_INET;		    //basic address family protocol
-    server_addr.sin_addr.s_addr = htonl(server_port);    //take any incoming interface
+    server_addr.sin_addr.s_addr = inet_addr(IP);    //take any incoming interface
     server_addr.sin_port = htons(server_port);	    //local port
 
 	//create socket
@@ -124,12 +129,42 @@ string receiveMessage(int *socket) {
     return messageBuf;
 }
 
+string getIV(int *socket) {
+	char* ivBuf = new char[BUFSIZE];
+	if(read(*socket,ivBuf,BUFSIZE) < 0) {
+    	cerr << "Failed to read login response" << endl;
+    	exit(-1);
+    }
+    return ivBuf;
+}
+
+string getKey(int *socket) {
+	char* keyBuf = new char[BUFSIZE];
+	if(read(*socket,keyBuf,BUFSIZE) < 0) {
+    	cerr << "Failed to read login response" << endl;
+    	exit(-1);
+    }
+    return keyBuf;
+}
+
 int main()
 {
 
+/*	TEST:
 	int *socket = connectToServer("127.0.0.1","8080");
 	char buffer[256];
 	cout<<"address is: "<<&socket<<endl;
 	cout<<"socket is: "<<socket<<endl;
+
+	while(1){
+		char buffer[256];
+		memset(buffer,0,sizeof(buffer));
+		cout<<"reading..."<<endl;
+		read(*socket,buffer,256);
+		cout<<"read"<<endl;
+		string input (buffer);
+		cout<<input<<endl;
+	}*/
+
     return 0;
 }

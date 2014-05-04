@@ -19,7 +19,7 @@
 using namespace std;
 
 // Establishes a connection to the server, returns a socket pointer
-int *connectToServer(string IP, string port);
+int *connectToServer(string serverIP, string port);
 
 // Send username and password to the server, and return true or false
 bool sendLogin(string login, int *socket);
@@ -33,5 +33,11 @@ bool sendMessage(string message, int *socket);
 
 // Receive a user's message, and return the message
 string receiveMessage(int *socket);
+
+// Get the IV
+string getIV(int *socket);
+
+// Get the Key
+string getKey(int *socket);
 #endif
  

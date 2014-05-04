@@ -353,10 +353,10 @@ int main(int argc, char * argv[]){
 		std::cout<<"Hosting on port: "<<server_port<<std::endl;
 
 
-   	if((server_port > 65535) || (server_port < 2000)){
+/*   	if((server_port > 65535) || (server_port < 2000)){
       		std::cerr << "Please enter a port number between 2000 - 65535" << std::endl;
     		exit(-1);
-   	}
+   	}*/
 
 	//create socket
 
