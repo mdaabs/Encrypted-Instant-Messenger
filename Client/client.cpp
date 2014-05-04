@@ -129,22 +129,13 @@ string receiveMessage(int *socket) {
     return messageBuf;
 }
 
-string getIV(int *socket) {
-	char* ivBuf = new char[BUFSIZE];
-	if(read(*socket,ivBuf,BUFSIZE) < 0) {
-    	cerr << "Failed to read login response" << endl;
+string getIVAndKey(int *socket) {
+	char* ivKeyBuf = new char[BUFSIZE];
+	if(read(*socket,ivKeyBuf,BUFSIZE) < 0) {
+    	cerr << "Failed to get IV and Key" << endl;
     	exit(-1);
     }
-    return ivBuf;
-}
-
-string getKey(int *socket) {
-	char* keyBuf = new char[BUFSIZE];
-	if(read(*socket,keyBuf,BUFSIZE) < 0) {
-    	cerr << "Failed to read login response" << endl;
-    	exit(-1);
-    }
-    return keyBuf;
+    return ivKeyBuf;
 }
 
 int main()
