@@ -14,9 +14,9 @@ std::string generateSalt() {
 	return saltString.str();
 }
 
+// generates hash from salt and password
+std::string generateHash(std::string salt, std::string pass) {
 
-std::string generateHash(std::string salt, std::string pass)
-{
     unsigned char hash[SHA256_DIGEST_LENGTH];
     SHA256_CTX sha256;
     SHA256_Init(&sha256);
@@ -29,4 +29,5 @@ std::string generateHash(std::string salt, std::string pass)
       ss << std::hex << std::setw(2) << std::setfill('0') << (int)hash[i];
     }
     return ss.str();
+
 }
