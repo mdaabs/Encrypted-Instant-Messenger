@@ -184,9 +184,9 @@ sqlite3 *db;
 }
 
 //DEMITRIOUS FILL IN HERE
-bool AddUserToDatabase(std::string username, std::string password, std::string salt){
+bool AddUserToDatabase(std::string username, std::string password, std::string salt, std::string iv, std::string key){
 
-	sqlite3 *db;
+  sqlite3 *db;
    sqlite3_stmt * stmt;
    char *zErrMsg = 0;
    int rc;
@@ -204,14 +204,14 @@ bool AddUserToDatabase(std::string username, std::string password, std::string s
    }
 
    //Insert statment
-   sql = "INSERT INTO USERS (USER_NAME, PASSWORD_HASH, SALT1, STATUS) VALUES ('" + username + "','" + password + "','" + salt + "', 0);";
+   sql = "INSERT INTO USERS (USER_NAME, PASSWORD_HASH, SALT, IV, KEY) VALUES ('" + username + "','" + password + "','" + salt + "','" + iv + "','" + key + "');";
 
 nbyte = sql.length() + 1;
 printf("%d", nbyte);
 
     sqlite3_prepare(db, sql.c_str(), nbyte, &stmt, NULL);
      
-     if( sqlite3_step( stmt ) != SQLITE_OK)
+     if( sqlite3_step( stmt ) != SQLITE_DONE)
      {
       fprintf(stdout, "Step failed I repeat step failed2\n");
       sqlite3_close(db);
