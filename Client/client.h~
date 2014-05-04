@@ -31,11 +31,13 @@ bool receiveLogin(int *socket);
 // Send a user's message to the server; return true or false
 bool sendMessage(string message, int *socket);
 
-// Receive a user's message from the server, and return the message
+// Receive a user's message, and return the message
 string receiveMessage(int *socket);
 
-// Get the IV and Key from the server
-string getIVAndKey(int *socket);
+// Get the IV
+string getIV(int *socket);
 
+// Get the Key
+string getKey(int *socket);
 #endif
  
