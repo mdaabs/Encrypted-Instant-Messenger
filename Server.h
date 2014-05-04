@@ -1,3 +1,4 @@
+//Standard C libraries
 #include <string.h>
 #include <cstring>
 #include <unistd.h>
@@ -37,3 +38,51 @@
 //HARDWARE DEPENDANT
 #define MAXINCOMINGCLIENTS 50
 #define BUFFERSIZE 256
+
+
+enum messagetype {
+	ADDUSER,
+	CHANGEPASSWORD,
+	LOGIN,
+	LOGOFF,
+	SENDMESSAGE,
+	INVALID
+};
+
+std::string daemonflag="-D";
+std::string debugflag="-d";
+std::string portflag="-p";
+
+std::string DecryptInput(std::string input);
+
+std::string FormatOutGoingMessage(std::string username, std::string message);
+
+std::string GetMessage(std::string input);
+
+std::string GetMessageReceiver(std::string input);
+
+bool IsUserOnline(std::string username);
+
+bool IsUserInDatabase(std::string username);
+
+bool AddUserToDatabase(std::string username);
+
+std::string GetUserName(std::string input);
+
+void SendMessage(std::string sender, std::string receiver, std::string message);
+
+void LogUserOff(std::string username);
+
+void LogUserOn(std::string username, int *client_socket);
+
+messagetype ParseData(std::string input);
+
+void *ThreadMain(void *clsk);
+
+void signal_callback_handler(int signum);
+
+
+
+
+
+
