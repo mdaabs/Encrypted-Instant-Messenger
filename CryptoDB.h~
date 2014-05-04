@@ -1,0 +1,14 @@
+#include <stdio.h> 
+#include <iostream>
+#include <fstream>
+#include <string>
+
+#include "Encryption.h"
+Encryption crypto;
+
+void printKey() {
+  unsigned char *aesKey;
+  size_t aesLength = crypto.getAesKey(&aesKey);
+  printf("AES Key: ");
+  printf("%x", aesKey);
+}
