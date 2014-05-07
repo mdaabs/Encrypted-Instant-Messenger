@@ -3,20 +3,12 @@
 #include <fstream>
 #include <string>
 
-//#include "b64.h"
 #include "Encryption.h"
-//#include "CryptoDB.h"
 #include "Hash.h"
 #define PRINT_KEYS
 
 Encryption crypto;
 Encryption crypto2;
-
-unsigned char * convertString(std::string str) {
-  unsigned char *cstr = (unsigned char*)str.c_str();
-
-  return cstr;
-}
 
 int main() {
   std::string key1 = crypto.printKey();
@@ -51,9 +43,6 @@ int main() {
 			return 1;
 		}
 
-//     	char* b64String = base64Encode(encMsg, encMsgLen);
-//      printf("Encrypted message: %s\n", b64String);
-
 		if ((decMsgLen = crypto.DecryptAes(encMsg, (size_t)encMsgLen, (unsigned char**)&decMsg, key1c, iv1c)) == -1) {
 			fprintf (stderr, "Decryption Failed");
 			return 1;
@@ -64,10 +53,8 @@ int main() {
 
 		free(encMsg);
         free(decMsg);
-        //free(b64String);
         encMsg    = NULL;
         decMsg    = NULL;
-       // b64String = NULL;
 	}
 
 	return 0;

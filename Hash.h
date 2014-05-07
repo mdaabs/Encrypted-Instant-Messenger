@@ -31,3 +31,10 @@ std::string generateHash(std::string salt, std::string pass) {
     return ss.str();
 
 }
+
+unsigned char * convertString(std::string str) {
+  unsigned char *cstr = (unsigned char*)str.c_str();
+
+  return cstr;
+}
+
