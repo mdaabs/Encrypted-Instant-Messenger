@@ -5,64 +5,71 @@
 
 //#include "b64.h"
 #include "Encryption.h"
-#include "CryptoDB.h"
+//#include "CryptoDB.h"
 #include "Hash.h"
 #define PRINT_KEYS
 
+Encryption crypto;
+Encryption crypto2;
+
+unsigned char * convertString(std::string str) {
+  unsigned char *cstr = (unsigned char*)str.c_str();
+
+  return cstr;
+}
+
 int main() {
-  printKey();
-  std::cout << std::endl;
+  std::string key1 = crypto.printKey();
+  std::string iv1 = crypto.printIV();
+  std::string key2 = crypto2.printKey();
+  std::string iv2 = crypto2.printIV();
+  std::cout << "AES Key: " << key1 << std::endl;
+  std::cout << "AES IV: " << iv1 << std::endl;
+  std::cout << "AES Key2: " << key2 << std::endl;
+  std::cout << "AES IV2: " << iv2 << std::endl;
   std::string salt = generateSalt();
   std::cout << salt << std::endl;
   std::cout << generateHash(salt, "test1") << std::endl;
-//   Encryption crypto;
+  unsigned char *key1c = convertString(key1);
+  unsigned char *iv1c = convertString(iv1);
+  unsigned char *key2c = convertString(key2);
+  unsigned char *iv2c = convertString(iv2);
+  std::string msg;
+	unsigned char *encMsg = NULL;
+	char *decMsg = NULL;
+	int encMsgLen;
+	int decMsgLen;
 
-// #ifdef PRINT_KEYS
-// 	unsigned char *aesKey;
-// 	//crypto.writeKeyToFile(stdout, KEY_AES);
-// 	size_t aesLength = crypto.getAesKey(&aesKey);
-// 	printf("AES Key: ");
-// 	for (unsigned int i = 0; i < aesLength; i++) {
-// 		  printf("%x", aesKey[i]);
-// 		}
-// 		printf("\n");
-// 	#endif
+	while (!std::cin.eof()) {
+		// AES message encryption
+		printf("AES message to encrypt: ");
+		fflush(stdout);
+		getline(std::cin, msg);
 
-// 	string msg;
-// 	unsigned char *encMsg = NULL;
-// 	char *decMsg = NULL;
-// 	int encMsgLen;
-// 	int decMsgLen;
+		if ((encMsgLen = crypto.EncryptAes((const unsigned char*)msg.c_str(), msg.size() + 1, &encMsg, key1c, iv1c)) == -1) {
+			fprintf (stderr, "Encryption Failed");
+			return 1;
+		}
 
-// 	while (!cin.eof()) {
-// 		// AES message encryption
-// 		printf("AES message to encrypt: ");
-// 		fflush(stdout);
-// 		getline(cin, msg);
+//     	char* b64String = base64Encode(encMsg, encMsgLen);
+//      printf("Encrypted message: %s\n", b64String);
 
-// 		if ((encMsgLen = crypto.EncryptAes((const unsigned char*)msg.c_str(), msg.size() + 1, &encMsg)) == -1) {
-// 			fprintf (stderr, "Encryption Failed");
-// 			return 1;
-// 		}
+		if ((decMsgLen = crypto.DecryptAes(encMsg, (size_t)encMsgLen, (unsigned char**)&decMsg, key1c, iv1c)) == -1) {
+			fprintf (stderr, "Decryption Failed");
+			return 1;
+		}
 
-// 	//	char* b64String = base64Encode(encMsg, encMsgLen);
-//     //    printf("Encrypted message: %s\n", b64String);
+		printf("%d bytes decrypted\n", decMsgLen);
+		printf("Decrypted message: %s\n", decMsg);
 
-// 		if ((decMsgLen = crypto.DecryptAes(encMsg, (size_t)encMsgLen, (unsigned char**)&decMsg)) == -1) {
-// 			fprintf (stderr, "Decryption Failed");
-// 			return 1;
-// 		}
-
-// 		printf("%d bytes decrypted\n", decMsgLen);
-// 		printf("Decrypted message: %s\n", decMsg);
-
-// 		free(encMsg);
-//         free(decMsg);
-//         //free(b64String);
-//         encMsg    = NULL;
-//         decMsg    = NULL;
-//        // b64String = NULL;
-// 	}
+		free(encMsg);
+        free(decMsg);
+        //free(b64String);
+        encMsg    = NULL;
+        decMsg    = NULL;
+       // b64String = NULL;
+	}
 
 	return 0;
+	
 }

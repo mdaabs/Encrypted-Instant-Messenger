@@ -22,8 +22,8 @@ public:
 	Encryption();
 	Encryption(unsigned char *remotePubKey, size_t remotePubKeyLen);
     ~Encryption();
-    int EncryptAes(const unsigned char *msg, size_t msgLen, unsigned char **encMsg);
-    int DecryptAes(unsigned char *encMsg, size_t encMsgLen, unsigned char **decMsg);
+    int EncryptAes(const unsigned char *msg, size_t msgLen, unsigned char **encMsg, unsigned char *aesKey, unsigned char *aesIV);
+    int DecryptAes(unsigned char *encMsg, size_t encMsgLen, unsigned char **decMsg, unsigned char *aesKey, unsigned char *aesIV);
     int writeKeyToFile(FILE *fd, int key);
     int getRemotePubKey(unsigned char **pubKey);
     int setRemotePubKey(unsigned char *pubKey, size_t pubKeyLen);
@@ -33,6 +33,8 @@ public:
     int setAesKey(unsigned char *aesKey, size_t aesKeyLen);
     int getAesIV(unsigned char **aesIV);
     int setAesIV(unsigned char *aesIV, size_t aesIVLen);
+    std::string printKey();
+    std::string printIV();
 private:
 	static EVP_PKEY *localKeyPair;
 	EVP_PKEY *remotePubKey;
