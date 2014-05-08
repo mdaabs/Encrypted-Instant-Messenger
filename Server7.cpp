@@ -306,23 +306,27 @@ std::string EncryptMessage(Encryption cryptobject, std::string message, std::str
 		std::cout<<"encrypt function: "<<message<<std::endl;
 	char * key=(char*)input_key.c_str();
 	char * iv=(char*)input_iv.c_str();
-	unsigned char * encrypt;
+	unsigned char * encrypt=NULL;
 	cryptobject.EncryptAes((unsigned char*)message.c_str(), message.size()+1, &encrypt, (unsigned char*)key, (unsigned char *)iv);
+	if(debugmode)
+		std::cout<<"encrypt function: "<<encrypt<<std::endl;
 	message=(char*)encrypt;
 	std::string retmess(message);
-	return message;
+	return retmess;
 }
 
-std::string DecryptMessage(Encryption cryptobject, std::string message, std::string input_key, std::string input_iv){
+char* DecryptMessage(Encryption cryptobject, std::string message, std::string input_key, std::string input_iv){
 	if(debugmode)
 		std::cout<<"decrypt function: "<<message<<std::endl;
 	char * key=(char*)input_key.c_str();
+	if(debugmode)
+		std::cout<<"key casted as: "<<key<<std::endl;
 	char * iv=(char*)input_iv.c_str();
-	unsigned char * decrypt;
+	unsigned char * decrypt=NULL;
 	cryptobject.DecryptAes((unsigned char*)message.c_str(), message.size()+1, &decrypt, (unsigned char*)key, (unsigned char *)iv);
-	message=(char*)decrypt;
-	std::string retmess(message);
-	return retmess;
+	//message=(char*)decrypt;
+//	std::string retmess(message);
+	return (const char*) decrypt;
 }
 
 //ONLY SUPPORTING LOGIN, LOGOFF AND SENDMESSAGE
@@ -369,6 +373,8 @@ void *ThreadMain(void *clsk){
 		std::cout<<"Encryption object being created: "<<std::endl;
 
 	Encryption cryptobject;	
+	if(debugmode)
+		std::cout<<"object size: "<<sizeof(cryptobject)<<std::endl;
 	key=cryptobject.printKey();
 	iv=cryptobject.printIV();
 	key_iv=FormatKeyIV(key, iv);
@@ -461,7 +467,7 @@ void *ThreadMain(void *clsk){
 			break;
 		/*had to encsapulate in brackets due to scoping limitations*/
 		case SENDMESSAGE:{
-
+			
 			receiver=GetMessageReceiver(input);
 			message=GetMessage(input);
 			if(debugmode)
