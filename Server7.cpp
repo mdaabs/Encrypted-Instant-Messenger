@@ -1,10 +1,10 @@
 /*
  *	Server.cpp
- *	v. 0.6
+ *	v. 0.7
  *	#2scoopz
  *
  *	Compile Instructions: Standard g++
- *	g++ Server6.cpp Encryption.cpp -std=gnu++0x -lpthread -Wall -Wextra -w -lcrypto -ldl -o Server6
+ *	g++ Server7.cpp Encryption.cpp -std=gnu++0x -lpthread -Wall -Wextra -w -lcrypto -ldl -o Server7
  *
  *
  *
