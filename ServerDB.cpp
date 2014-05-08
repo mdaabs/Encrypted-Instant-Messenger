@@ -388,7 +388,6 @@ void *ThreadMain(void *clsk){
 		std::string receiver;
 		std::string message;
 		std::string confirmation;
-		//std::string credreq;
 
 		switch(action){
 		case LOGIN:
@@ -407,24 +406,14 @@ void *ThreadMain(void *clsk){
 			LogUserOn(username, &client_socket);
 			StoreUserKeyIV(username, key_iv);
 			SendMessage(username, username,t);
-			memset(buffer,0,BUFFERSIZE);
-			read(client_socket, buffer, BUFFERSIZE);
-			{
-				std:: string credreq (buffer);
-				if(!(credreq.compare("CREDREQ")==0)){
-					close(client_socket);
-					//loggedon=false;
-					listening=false;
-					pthread_exit(0);
-			}
 			SendMessage(username, username,key_iv);
-			}
+
 			if(debugmode)
 				std::cout<<username<<std::endl;
 		//	loggedon=true;
 			break;
 
-			
+		
 		case LOGOFF:
 			//add validation code
 
