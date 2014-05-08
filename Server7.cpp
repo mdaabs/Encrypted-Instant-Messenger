@@ -134,6 +134,11 @@ bool AddUserToDatabase(std::string username, std::string password, std::string s
 	return true;
 }
 
+bool ValidateUserInDatabase(std::string username, std::string password){
+
+return false;
+}
+
 std::string GetUserPassword(std::string input){
 	std::string password=input.substr(input.find(star_delimiter)+((password_delimiter.length())+star_delimiter.length()));
 
@@ -387,8 +392,17 @@ void *ThreadMain(void *clsk){
 		switch(action){
 		case LOGIN:
 			//add validation code
+
+
 			username=GetUserName(input);
 			password=GetUserPassword(input);
+			if(ValidateUserInDatabase(username, password)){
+				if(debugmode)
+				std::cout<<"invalid login"<<std::endl;
+				SendMessage(username, username,f);
+				pthread_exit(0);
+
+			}
 			LogUserOn(username, &client_socket);
 			StoreUserKeyIV(username, key_iv);
 			SendMessage(username, username,t);
