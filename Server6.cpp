@@ -348,7 +348,7 @@ void *ThreadMain(void *clsk){
 			
 //int Encryption::EncryptAes(const unsigned char *msg, size_t msgLen, unsigned char **encMsg, unsigned char *aesKey, unsigned char *aesIV)
 //int Encryption::DecryptAes(unsigned char *encMsg, size_t encMsgLen, unsigned char **decMsg, unsigned char *aesKey, unsigned char *aesIV)
-			message=cryptobject.DecryptAes((const char *)message.c_str(), message.size(), &encmsg,(unsigned char *) key.c_str(), (unsigned char *) iv.c_str());
+	
 			message=FormatOutGoingMessage(username, message);
 			SendMessage(username, receiver,message);
 			break;

@@ -300,23 +300,29 @@ std::string DecryptMessage(Encryption cryptobject, std::string message, char * k
 	message=(char*)decrypt;
 	return message;
 }*/
+
 std::string EncryptMessage(Encryption cryptobject, std::string message, std::string input_key, std::string input_iv){
+	if(debugmode)
+		std::cout<<"encrypt function: "<<message<<std::endl;
 	char * key=(char*)input_key.c_str();
 	char * iv=(char*)input_iv.c_str();
 	unsigned char * encrypt;
 	cryptobject.EncryptAes((unsigned char*)message.c_str(), message.size()+1, &encrypt, (unsigned char*)key, (unsigned char *)iv);
 	message=(char*)encrypt;
-
+	std::string retmess(message);
 	return message;
 }
 
 std::string DecryptMessage(Encryption cryptobject, std::string message, std::string input_key, std::string input_iv){
+	if(debugmode)
+		std::cout<<"decrypt function: "<<message<<std::endl;
 	char * key=(char*)input_key.c_str();
 	char * iv=(char*)input_iv.c_str();
 	unsigned char * decrypt;
 	cryptobject.DecryptAes((unsigned char*)message.c_str(), message.size()+1, &decrypt, (unsigned char*)key, (unsigned char *)iv);
 	message=(char*)decrypt;
-	return message;
+	std::string retmess(message);
+	return retmess;
 }
 
 //ONLY SUPPORTING LOGIN, LOGOFF AND SENDMESSAGE
@@ -458,12 +464,15 @@ void *ThreadMain(void *clsk){
 
 			receiver=GetMessageReceiver(input);
 			message=GetMessage(input);
-
+			if(debugmode)
+				std::cout<<"calling decrypt for incoming"<<std::endl;
 			message=DecryptMessage(cryptobject,message,key,iv);
-
+			if(debugmode)
+				std::cout<<"decrypted message: "<<message<<std::endl;
 			std::string recv_key=GetReceiversKey(receiver);
 			std::string recv_iv=GetReceiversIV(receiver);
-
+			if(debugmode)
+				std::cout<<"calling encrypt for outgoing"<<std::endl;
 			message=EncryptMessage(cryptobject,message,recv_key, recv_iv);
 
 			message=FormatOutGoingMessage(username, message);
