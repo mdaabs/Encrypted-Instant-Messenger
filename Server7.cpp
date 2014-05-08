@@ -225,6 +225,22 @@ void LogUserOn(std::string username, int *client_socket){
 
 }
 
+std::string Encrypt_Message(Encryption cryptobject, std::string message, char * key, char * iv){
+	unsigned char * encrypt;
+	cryptobject.EncryptAes((unsigned char*)message.c_str(), message.size()+1, &encrypt, (unsigned char*)key, (unsigned char *)iv);
+	message=(char*)encrypt;
+
+	return message;
+}
+
+std::string Decrypt_Message(Encryption cryptobject, std::string message, char * key, char * iv){
+	//cryptobject.DecryptAes
+	unsigned char * decrypt;
+	cryptobject.DecryptAes((unsigned char*)message.c_str(), message.size()+1, &decrypt, (unsigned char*)key, (unsigned char *)iv);
+	message=(char*)decrypt;
+	return message;
+}
+
 //ONLY SUPPORTING LOGIN, LOGOFF AND SENDMESSAGE
 messagetype ParseData(std::string input){
 
@@ -345,10 +361,16 @@ void *ThreadMain(void *clsk){
 			char * encmsg;
 			receiver=GetMessageReceiver(input);
 			message=GetMessage(input);
-			
+			char * tempiv;
+			char * tempkey;
+			tempiv=(char*)iv.c_str();
+			tempkey=(char*)key.c_str();
+			message=(cryptobject, message, tempiv, tempkey);
+			//strcpy(tempiv, iv.c_str());
+			//tempiv=const_cast<char *>(iv._c_str()), c.size());
 //int Encryption::EncryptAes(const unsigned char *msg, size_t msgLen, unsigned char **encMsg, unsigned char *aesKey, unsigned char *aesIV)
 //int Encryption::DecryptAes(unsigned char *encMsg, size_t encMsgLen, unsigned char **decMsg, unsigned char *aesKey, unsigned char *aesIV)
-			message=cryptobject.DecryptAes((const char *)message.c_str(), message.size(), &encmsg,(unsigned char *) key.c_str(), (unsigned char *) iv.c_str());
+			//cryptobject.DecryptAes((const char *)message.c_str(), message.size(), &encmsg,(unsigned char *) tempkey, (unsigned char *) tempiv);
 			message=FormatOutGoingMessage(username, message);
 			SendMessage(username, receiver,message);
 			break;
