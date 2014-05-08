@@ -53,7 +53,7 @@ std::string message_delimiter="MESSAGE:";
 std::string password_delimiter="PASS:";
 std::string star_delimiter="*";
 std::string equal_delimiter="=";
-std::string colon_delimiter="=";
+std::string colon_delimiter=":";
 std::string t="TRUE";
 std::string f="FALSE";
 
@@ -208,12 +208,17 @@ void StoreUserKeyIV(std::string username, std::string key_iv){
 	
 	pthread_mutex_lock(&mutex);
 	username_keyiv->insert(std::map<std::string, std::string>::value_type(username, key_iv));
+	if(debugmode)
+		std::cout<<"map username: "<<username<<std::endl;
+	if(debugmode)
+		std::cout<<"map keyiv: "<<key_iv<<std::endl;
 	pthread_mutex_unlock(&mutex);
 	if(debugmode)
 		std::cout<<"mutex released"<<std::endl;
 	if(debugmode)
 		std::cout<<"successfully stored: "<<username<<"'s credentials"<<std::endl;
-
+	if(debugmode)
+		std::cout<<"testing lookup: "<<username_keyiv->at(username)<<std::endl;
 }
 void LogUserOn(std::string username, int *client_socket){
 
@@ -241,7 +246,10 @@ std::string GetReceiversIV(std::string username){
 			std::cout<<"getting keyiv string"<<std::endl;
 	
 		keyiv=username_keyiv->at(username);
-		iv=keyiv.substr(keyiv.find(star_delimiter)+star_delimiter.length());
+		if(debugmode)
+			std::cout<<"got keyiv string"<<std::endl;
+		iv=keyiv.substr(keyiv.find(colon_delimiter)+colon_delimiter.length());
+		iv=iv.substr(0, iv.find(colon_delimiter));
 		if(debugmode)
 			std::cout<<"parsed iv as string "<<iv<<std::endl;
 	}
@@ -263,8 +271,10 @@ std::string GetReceiversKey(std::string username){
 			std::cout<<"getting keyiv string"<<std::endl;
 	
 		keyiv=username_keyiv->at(username);
-		key=keyiv.substr(keyiv.find(star_delimiter)+star_delimiter.length());
-		key=key.substr(0, key.find(star_delimiter));
+		if(debugmode)
+			std::cout<<"got keyiv string"<<std::endl;
+		//key=keyiv.substr(keyiv.find(colon_delimiter)+colon_delimiter.length());
+		key=keyiv.substr(0, keyiv.find(colon_delimiter));
 		if(debugmode)
 			std::cout<<"parsed key as string "<<key<<std::endl;
 	}
@@ -354,7 +364,7 @@ void *ThreadMain(void *clsk){
 
 	Encryption cryptobject;	
 	key=cryptobject.printKey();
-	iv=cryptobject.printKey();
+	iv=cryptobject.printIV();
 	key_iv=FormatKeyIV(key, iv);
 
 	if(debugmode){
@@ -399,7 +409,7 @@ void *ThreadMain(void *clsk){
 			password=GetUserPassword(input);
 			if(ValidateUserInDatabase(username, password)){
 				if(debugmode)
-				std::cout<<"invalid login"<<std::endl;
+					std::cout<<"invalid login"<<std::endl;
 				SendMessage(username, username,f);
 				pthread_exit(0);
 
@@ -452,7 +462,7 @@ void *ThreadMain(void *clsk){
 			message=DecryptMessage(cryptobject,message,key,iv);
 
 			std::string recv_key=GetReceiversKey(receiver);
-			std::string recv_iv=GetReceiversIV(iv);
+			std::string recv_iv=GetReceiversIV(receiver);
 
 			message=EncryptMessage(cryptobject,message,recv_key, recv_iv);
 
