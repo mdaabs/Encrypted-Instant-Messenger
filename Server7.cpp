@@ -224,8 +224,53 @@ void LogUserOn(std::string username, int *client_socket){
 		std::cout<<"logged user: "<<username<<" online"<<std::endl;
 
 }
+std::string GetReceiversIV(std::string username){
+//	std::string receiver=input.substr(input.find(to_delimiter)+(to_delimiter.length()));
+//	receiver=receiver.substr(0,receiver.find(star_delimiter));
+	std::string keyiv;
+	std::string iv;
+	if(debugmode)
+		std::cout<<"about to try lookup key"<<std::endl;
+	try{	
+		if(debugmode)
+			std::cout<<"getting keyiv string"<<std::endl;
+	
+		keyiv=username_keyiv->at(username);
+		iv=keyiv.substr(keyiv.find(star_delimiter)+star_delimiter.length());
+		if(debugmode)
+			std::cout<<"parsed iv as string "<<iv<<std::endl;
+	}
+	catch (std::exception e){
+		if(debugmode)
+			std::cout<<"error occured on lookup"<<std::endl;
+	}
+	return iv;
+}
+std::string GetReceiversKey(std::string username){
+//	std::string receiver=input.substr(input.find(to_delimiter)+(to_delimiter.length()));
+//	receiver=receiver.substr(0,receiver.find(star_delimiter));
+	std::string keyiv;
+	std::string key;
+	if(debugmode)
+		std::cout<<"about to try lookup key"<<std::endl;
+	try{	
+		if(debugmode)
+			std::cout<<"getting keyiv string"<<std::endl;
+	
+		keyiv=username_keyiv->at(username);
+		key=keyiv.substr(keyiv.find(star_delimiter)+star_delimiter.length());
+		key=key.substr(0, key.find(star_delimiter));
+		if(debugmode)
+			std::cout<<"parsed key as string "<<key<<std::endl;
+	}
+	catch (std::exception e){
+		if(debugmode)
+			std::cout<<"error occured on lookup"<<std::endl;
+	}
+	return key;
+}
 
-std::string Encrypt_Message(Encryption cryptobject, std::string message, char * key, char * iv){
+/*std::string EncryptMessage(Encryption cryptobject, std::string message, char * key, char * iv){
 	unsigned char * encrypt;
 	cryptobject.EncryptAes((unsigned char*)message.c_str(), message.size()+1, &encrypt, (unsigned char*)key, (unsigned char *)iv);
 	message=(char*)encrypt;
@@ -233,8 +278,26 @@ std::string Encrypt_Message(Encryption cryptobject, std::string message, char * 
 	return message;
 }
 
-std::string Decrypt_Message(Encryption cryptobject, std::string message, char * key, char * iv){
+std::string DecryptMessage(Encryption cryptobject, std::string message, char * key, char * iv){
 	//cryptobject.DecryptAes
+	unsigned char * decrypt;
+	cryptobject.DecryptAes((unsigned char*)message.c_str(), message.size()+1, &decrypt, (unsigned char*)key, (unsigned char *)iv);
+	message=(char*)decrypt;
+	return message;
+}*/
+std::string EncryptMessage(Encryption cryptobject, std::string message, std::string input_key, std::string input_iv){
+	char * key=(char*)input_key.c_str();
+	char * iv=(char*)input_iv.c_str();
+	unsigned char * encrypt;
+	cryptobject.EncryptAes((unsigned char*)message.c_str(), message.size()+1, &encrypt, (unsigned char*)key, (unsigned char *)iv);
+	message=(char*)encrypt;
+
+	return message;
+}
+
+std::string DecryptMessage(Encryption cryptobject, std::string message, std::string input_key, std::string input_iv){
+	char * key=(char*)input_key.c_str();
+	char * iv=(char*)input_iv.c_str();
 	unsigned char * decrypt;
 	cryptobject.DecryptAes((unsigned char*)message.c_str(), message.size()+1, &decrypt, (unsigned char*)key, (unsigned char *)iv);
 	message=(char*)decrypt;
@@ -355,26 +418,24 @@ void *ThreadMain(void *clsk){
 			listening=false;
 			pthread_exit(0);
 			break;
-		
-		case SENDMESSAGE:
-			//add validation code
-			char * encmsg;
+		/*had to encsapulate in brackets due to scoping limitations*/
+		case SENDMESSAGE:{
+
 			receiver=GetMessageReceiver(input);
 			message=GetMessage(input);
-			char * tempiv;
-			char * tempkey;
-			tempiv=(char*)iv.c_str();
-			tempkey=(char*)key.c_str();
-			message=(cryptobject, message, tempiv, tempkey);
-			//strcpy(tempiv, iv.c_str());
-			//tempiv=const_cast<char *>(iv._c_str()), c.size());
-//int Encryption::EncryptAes(const unsigned char *msg, size_t msgLen, unsigned char **encMsg, unsigned char *aesKey, unsigned char *aesIV)
-//int Encryption::DecryptAes(unsigned char *encMsg, size_t encMsgLen, unsigned char **decMsg, unsigned char *aesKey, unsigned char *aesIV)
-			//cryptobject.DecryptAes((const char *)message.c_str(), message.size(), &encmsg,(unsigned char *) tempkey, (unsigned char *) tempiv);
+
+			message=DecryptMessage(cryptobject,message,key,iv);
+
+			std::string recv_key=GetReceiversKey(receiver);
+			std::string recv_iv=GetReceiversIV(iv);
+
+			message=EncryptMessage(cryptobject,message,recv_key, recv_iv);
+
 			message=FormatOutGoingMessage(username, message);
 			SendMessage(username, receiver,message);
-			break;
 
+			break;
+			}
 		case ADDUSER:
 
 			username=GetMessageReceiver(input);
