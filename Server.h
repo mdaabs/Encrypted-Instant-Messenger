@@ -1,3 +1,7 @@
+#ifndef SERVER_H_
+#define SERVER_H_
+
+
 //Standard C libraries
 #include <string.h>
 #include <cstring>
@@ -33,7 +37,11 @@
 #include <sstream>
 #include <iomanip>
 
-//#include "User.h"
+//Custom files
+//#include "Encryption.cpp"
+#include "Encryption.h"
+#include "Hash.h"
+//#define PRINT_KEYS
 
 //HARDWARE DEPENDANT
 #define MAXINCOMINGCLIENTS 50
@@ -84,5 +92,5 @@ void signal_callback_handler(int signum);
 
 
 
-
+#endif
 

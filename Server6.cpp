@@ -1,10 +1,11 @@
 /*
  *	Server.cpp
- *	v. 0.5
+ *	v. 0.6
  *	#2scoopz
  *
  *	Compile Instructions: Standard g++
- *	g++ Server6.cpp -std=gnu++0x -lpthread -w -o Server6
+ *	g++ Server6.cpp Encryption.cpp -std=gnu++0x -lpthread -Wall -Wextra -w -lcrypto -ldl -o Server6
+ *
  *
  *
  *
@@ -37,17 +38,22 @@
 
 //Standard C libraries
 #include "Server.h"
-
+//#include "Encryption.h"
+//#include "Hash.h"
+//#define PRINT_KEYS
 
 std::unordered_map<std::string, int*> *username_sockets=new std::unordered_map<std::string, int*>();
-std::unordered_map<std::string, int*> *username_iv=new std::unordered_map<std::string, int*>();
+std::unordered_map<std::string, std::string> *username_keyiv=new std::unordered_map<std::string, std::string>();
+
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+
 std::string to_delimiter="TO:";
 std::string from_delimiter="FROM:";
 std::string message_delimiter="MESSAGE:";
 std::string password_delimiter="PASS:";
 std::string star_delimiter="*";
 std::string equal_delimiter="=";
+std::string colon_delimiter="=";
 std::string t="TRUE";
 std::string f="FALSE";
 
@@ -56,7 +62,7 @@ bool daemonize=false;
 bool debugmode=false;
 bool portspecified=false;
 
-
+	//Encryption ~cryptobject();
 //MARIO FILL IN HERE
 std::string DecryptInput(std::string input){
 
@@ -64,18 +70,12 @@ std::string DecryptInput(std::string input){
 	return input;
 }
 
-//MARIO FILL IN HERE
-std::string GetIV(std::string username, std::string password){
-	std::string iv="iv";
-		
-	return iv;
-}
+std::string FormatKeyIV(std::string key, std::string iv){
+	std::string formatted_string=key+colon_delimiter+iv;
+	if(debugmode)
+		std::cout<<"formatted message: "<<formatted_string<<std::endl;
+	return formatted_string;
 
-//MARIO FILL IN HERE
-std::string GetKey(std::string username, std::string password){
-	std::string key="key";
-		
-	return key;
 }
 
 std::string FormatOutGoingMessage(std::string username, std::string message){
@@ -129,12 +129,8 @@ bool AddUserToDatabase(std::string username){
 }
 
 std::string GetUserPassword(std::string input){
-//	std::string password=input.substr(input.find(password_delimiter)+(password_delimiter.length()));
-//	std::string password=input.substr(input.find(password_delimiter)+(password_delimiter.length()));
-//	password=password.substr(password.find(password_delimiter)+(password_delimiter.length()));
-//		std::cout<<"password parsed as "<<password<<std::endl;
 	std::string password=input.substr(input.find(star_delimiter)+((password_delimiter.length())+star_delimiter.length()));
-	//username=username.substr(0,username.find(star_delimiter));
+
 	if(debugmode)
 		std::cout<<"password parsed: "<<password<<std::endl;
 	return password;
@@ -142,9 +138,7 @@ std::string GetUserPassword(std::string input){
 }
 
 std::string GetUserName(std::string input){
-//	std::string username=input.substr(input.find(equal_delimiter)+(equal_delimiter.length()));
-//	std::string username=input.substr(input.find(equal_delimiter)+(equal_delimiter.length()));
-//	username=username.substr(username.find(equal_delimiter)+(equal_delimiter.length()));
+
 	std::string username=input.substr(input.find(equal_delimiter)+(equal_delimiter.length()));
 	username=username.substr(0,username.find(star_delimiter));
 
@@ -179,20 +173,32 @@ void LogUserOff(std::string username){
 		std::cout<<"logoff called for "<<username<<std::endl;
 	if(debugmode)
 		std::cout<<"mutex locking"<<std::endl;
+
 	pthread_mutex_lock(&mutex);
-	//int *receiver_socket=username_sockets->at(username);
 	username_sockets->erase(username);
-	//free (receiver_socket);
 	pthread_mutex_unlock(&mutex);
+	
 	if(debugmode)
 		std::cout<<"mutex released"<<std::endl;
 	if(debugmode)
 		std::cout<<"removed user: "<<username<<std::endl;
 }
+void StoreUserKeyIV(std::string username, std::string key_iv){
 
+	if(debugmode)
+		std::cout<<"mutex locking"<<std::endl;
+	
+	pthread_mutex_lock(&mutex);
+	username_keyiv->insert(std::map<std::string, std::string>::value_type(username, key_iv));
+	pthread_mutex_unlock(&mutex);
+	if(debugmode)
+		std::cout<<"mutex released"<<std::endl;
+	if(debugmode)
+		std::cout<<"successfully stored: "<<username<<"'s credentials"<<std::endl;
+
+}
 void LogUserOn(std::string username, int *client_socket){
-	//std::string delimiter="=";
-	//std::string username=input.substr(input.find(equal_delimiter)+(equal_delimiter.length()));
+
 	if(debugmode)
 		std::cout<<"mutex locking"<<std::endl;
 	
@@ -203,8 +209,7 @@ void LogUserOn(std::string username, int *client_socket){
 		std::cout<<"mutex released"<<std::endl;
 	if(debugmode)
 		std::cout<<"logged user: "<<username<<" online"<<std::endl;
-	//std::cout<<"user is on port address: "<<&(username_sockets["username"])<<std::endl; 
-	//return username;
+
 }
 
 //ONLY SUPPORTING LOGIN, LOGOFF AND SENDMESSAGE
@@ -239,12 +244,29 @@ void *ThreadMain(void *clsk){
 	pthread_detach(pthread_self());
 	bool loggedon=false;
 	char buffer[BUFFERSIZE];
-	std::string username, password, iv, key;
+	std::string username, password, iv, key, key_iv;
 	//std::string* nameptr=&username;
 	//pthread_detach(pthread_self());
+	if(debugmode)
+		std::cout<<"Encryption object being created: "<<std::endl;
+
+	Encryption cryptobject;	
+	key=cryptobject.printKey();
+	iv=cryptobject.printKey();
+	key_iv=FormatKeyIV(key, iv);
+	if(debugmode){
+		std::cout<<"Key generated as: "<<std::endl;
+		std::cout<<key<<std::endl;
+		std::cout<<"IV generated as: "<<std::endl;
+		std::cout<<iv<<std::endl;
+
+	}
+
 	int client_socket=*((int*)clsk);
+
 	if(debugmode)
 		std::cout<<"Successful thread, listening to client: "<<*((int*)clsk)<<std::endl;
+
 	bool listening=true;
 	while(listening){
 		if(debugmode)
@@ -255,8 +277,7 @@ void *ThreadMain(void *clsk){
 			std::cout<<"Successfully received message"<<std::endl;
 		std::string input(buffer);
 		if(debugmode)
-			std::cout<<"decrypting input..."<<std::endl;
-		//input=DecryptInput(input);	//waiting for mario's code.
+		//	std::cout<<"decrypting input..."<<std::endl;
 		if(debugmode)
 			std::cout<<"converting message type"<<std::endl;
 		messagetype action=ParseData(input);
@@ -270,15 +291,12 @@ void *ThreadMain(void *clsk){
 			username=GetUserName(input);
 			password=GetUserPassword(input);
 			LogUserOn(username, &client_socket);
-			//*nameptr=LogUserOn(input, &client_socket);
+			StoreUserKeyIV(username, key_iv);
 			SendMessage(username, username,t);
-			iv=GetIV(username, password);
-			SendMessage(username, username,iv);
-			key=GetKey(username, password);
-			SendMessage(username, username,key);
+			SendMessage(username, username,key_iv);
+
 			if(debugmode)
 				std::cout<<username<<std::endl;
-			//std::cout<<*nameptr<<std::endl;
 			loggedon=true;
 			break;
 
@@ -323,8 +341,7 @@ void *ThreadMain(void *clsk){
 			break;
 
 		case INVALID:
-			//std::string invalid="invalid command";
-			//SendMessage(username,
+	
 			break;
 		default:
 			break;
@@ -341,9 +358,9 @@ void *ThreadMain(void *clsk){
 
 }
 void signal_callback_handler(int signum){
-	std::cout<<"handled sig exit"<<std::endl;
+	//std::cout<<"handled sig exit"<<std::endl;
 	delete username_sockets;
-	delete username_iv;
+	delete username_keyiv;
 	exit(signum);
 
 }
@@ -432,7 +449,7 @@ int main(int argc, char * argv[]){
 
 	bool finished=false;
 	int thread_count=0;
-	//Loops for clients, then threads off
+
 	if(daemonize){
 		pid=fork();
 		if(pid>0){
@@ -442,7 +459,7 @@ int main(int argc, char * argv[]){
 		}
 	}
 		
-
+	//Loops for clients, then threads off
 	while(!finished){
 		client_socket=accept(server_socket, (struct sockaddr *) &client_address, &address_length);
 		pthread_t thread;
@@ -453,7 +470,7 @@ int main(int argc, char * argv[]){
 
 //need to delete int* 
 delete username_sockets;
-delete username_iv;
+delete username_keyiv;
 
 return 0;
 }
