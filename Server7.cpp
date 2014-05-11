@@ -514,17 +514,10 @@ void *ThreadMain(void *clsk){
                        unsigned char* char_iv=convertString(iv);
                        // iv="1";
 
-                        unsigned char *encmsg = NULL;
-
-                        Encryption crypto;
-                        crypto.EncryptAes((const unsigned char*)message.c_str(), message.size() + 1, &encmsg, ( unsigned char*)char_key, ( unsigned char*)char_iv);
-                      	if(debugmode)
-				std::cout<<"encrypt: "<<(const char *) encmsg<<"\n";
-                        message=(const char *) encmsg;
 
                         unsigned char *decrypt = NULL;
-
-
+                        unsigned char *encmsg = NULL;
+                        Encryption crypto;
                        crypto.DecryptAes(( unsigned char*)message.c_str(), message.size() + 1, &decrypt, ( unsigned char*)char_key, ( unsigned char*)char_iv);
                       	if(debugmode)
                        		std::cout<<"decrypt: "<<(const char *) decrypt<<"\n";
@@ -532,12 +525,20 @@ void *ThreadMain(void *clsk){
 
            // message=DecryptMessage(cryptobject,message,key,iv);
 
-//            std::string recv_key=GetReceiversKey(receiver);
-//            std::string recv_iv=GetReceiversIV(iv);
+            std::string recv_key=GetReceiversKey(receiver);
+            std::string recv_iv=GetReceiversIV(iv);
 
-             std:: string recv_key="1";
-              std::string recv_iv="1";
+             unsigned char* char_recv_key=convertString(recv_key);
+              unsigned char* char_recv_iv=convertString(recv_iv);
             //message=EncryptMessage(cryptobject,message,recv_key, recv_iv);
+
+
+
+
+                        crypto.EncryptAes((const unsigned char*)message.c_str(), message.size() + 1, &encmsg, ( unsigned char*)char_recv_key, ( unsigned char*)char_recv_iv);
+                      	if(debugmode)
+				std::cout<<"encrypt: "<<(const char *) encmsg<<"\n";
+                        message=(const char *) encmsg;
 
             message=FormatOutGoingMessage(username, message);
             SendMessage(username, receiver,message);
