@@ -301,7 +301,7 @@ std::string DecryptMessage(Encryption cryptobject, std::string message, char * k
 	return message;
 }*/
 
-std::string EncryptMessage(Encryption cryptobject, std::string message, std::string input_key, std::string input_iv){
+/*std::string EncryptMessage(Encryption cryptobject, std::string message, std::string input_key, std::string input_iv){
 	if(debugmode)
 		std::cout<<"encrypt function: "<<message<<std::endl;
 	char * key=(char*)input_key.c_str();
@@ -327,6 +327,25 @@ char* DecryptMessage(Encryption cryptobject, std::string message, std::string in
 	//message=(char*)decrypt;
 //	std::string retmess(message);
 	return (const char*) decrypt;
+}*/
+
+std::string EncryptMessage(Encryption cryptobject, std::string message, std::string input_key, std::string input_iv){
+    char * key=(char*)input_key.c_str();
+    char * iv=(char*)input_iv.c_str();
+    unsigned char * encrypt;
+    cryptobject.EncryptAes((unsigned char*)message.c_str(), message.size()+1, &encrypt, (unsigned char*)key, (unsigned char *)iv);
+    message=(char*)encrypt;
+
+    return message;
+}
+
+std::string DecryptMessage(Encryption cryptobject, std::string message, std::string input_key, std::string input_iv){
+    char * key=(char*)input_key.c_str();
+    char * iv=(char*)input_iv.c_str();
+    unsigned char * decrypt;
+    cryptobject.DecryptAes((unsigned char*)message.c_str(), message.size()+1, &decrypt, (unsigned char*)key, (unsigned char *)iv);
+    message=(char*)decrypt;
+    return message;
 }
 
 //ONLY SUPPORTING LOGIN, LOGOFF AND SENDMESSAGE
@@ -433,12 +452,12 @@ void *ThreadMain(void *clsk){
 			read(client_socket, buffer, BUFFERSIZE);
 			{
 				std:: string credreq (buffer);
-				if(!(credreq.compare("CREDREQ")==0)){
+				/*if(!(credreq.compare("CREDREQ")==0)){
 					close(client_socket);
 					//loggedon=false;
 					listening=false;
 					pthread_exit(0);
-			}
+			}*/
 			SendMessage(username, username,key_iv);
 			}
 			if(debugmode)
@@ -467,7 +486,7 @@ void *ThreadMain(void *clsk){
 			break;
 		/*had to encsapulate in brackets due to scoping limitations*/
 		case SENDMESSAGE:{
-			
+			/*
 			receiver=GetMessageReceiver(input);
 			message=GetMessage(input);
 			if(debugmode)
@@ -484,7 +503,46 @@ void *ThreadMain(void *clsk){
 			message=FormatOutGoingMessage(username, message);
 			SendMessage(username, receiver,message);
 
-			break;
+			break;*/
+
+            receiver=GetMessageReceiver(input);
+            message=GetMessage(input);
+            //george's testing for encrypt and decrypt
+
+                       unsigned char* char_key=convertString(key);
+                       // key="1";
+                       unsigned char* char_iv=convertString(iv);
+                       // iv="1";
+
+                        unsigned char *encmsg = NULL;
+
+                        Encryption crypto;
+                        crypto.EncryptAes((const unsigned char*)message.c_str(), message.size() + 1, &encmsg, ( unsigned char*)char_key, ( unsigned char*)char_iv);
+                      	if(debugmode)
+				std::cout<<"encrypt: "<<(const char *) encmsg<<"\n";
+                        message=(const char *) encmsg;
+
+                        unsigned char *decrypt = NULL;
+
+
+                       crypto.DecryptAes(( unsigned char*)message.c_str(), message.size() + 1, &decrypt, ( unsigned char*)char_key, ( unsigned char*)char_iv);
+                      	if(debugmode)
+                       		std::cout<<"decrypt: "<<(const char *) decrypt<<"\n";
+			message=(const char *) decrypt;
+
+           // message=DecryptMessage(cryptobject,message,key,iv);
+
+//            std::string recv_key=GetReceiversKey(receiver);
+//            std::string recv_iv=GetReceiversIV(iv);
+
+             std:: string recv_key="1";
+              std::string recv_iv="1";
+            //message=EncryptMessage(cryptobject,message,recv_key, recv_iv);
+
+            message=FormatOutGoingMessage(username, message);
+            SendMessage(username, receiver,message);
+
+            break;
 			}
 		case ADDUSER:
 
