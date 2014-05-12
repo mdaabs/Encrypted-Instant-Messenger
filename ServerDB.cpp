@@ -38,6 +38,7 @@
 
 //Standard C libraries
 #include "Server.h"
+#include "sqlite3.h"
 //#include "Encryption.h"
 //#include "Hash.h"
 //#define PRINT_KEYS
@@ -45,7 +46,8 @@
 std::unordered_map<std::string, int*> *username_sockets=new std::unordered_map<std::string, int*>();
 std::unordered_map<std::string, std::string> *username_keyiv=new std::unordered_map<std::string, std::string>();
 
-pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t socket_mutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t keyiv_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 std::string to_delimiter="TO:";
 std::string from_delimiter="FROM:";
@@ -53,7 +55,7 @@ std::string message_delimiter="MESSAGE:";
 std::string password_delimiter="PASS:";
 std::string star_delimiter="*";
 std::string equal_delimiter="=";
-std::string colon_delimiter="=";
+std::string colon_delimiter=":";
 std::string t="TRUE";
 std::string f="FALSE";
 
@@ -62,13 +64,7 @@ bool daemonize=false;
 bool debugmode=false;
 bool portspecified=false;
 
-	//Encryption ~cryptobject();
-//MARIO FILL IN HERE
-std::string DecryptInput(std::string input){
 
-		
-	return input;
-}
 
 std::string FormatKeyIV(std::string key, std::string iv){
 	std::string formatted_string=key+colon_delimiter+iv;
@@ -93,8 +89,6 @@ std::string GetMessage(std::string input){
 		std::cout<<"message is: "<<message<<std::endl;
 	return message;
 }
-
-
 
 
 std::string GetMessageReceiver(std::string input){
@@ -124,19 +118,166 @@ bool IsUserOnline(std::string username){
 
 //DEMITRIOUS FILL IN HERE
 bool IsUserInDatabase(std::string username){
+sqlite3 *db;
+   sqlite3_stmt * stmt;
+   char *zErrMsg = 0;
+   int rc;
+   std::string sql;
+   int nbyte;
+   int thestep;
 
-	return true;
+   rc = sqlite3_open("CryptChat.db", &db);
+
+    if( rc ){
+      fprintf(stderr, "Can't open database: %s\n", sqlite3_errmsg(db));
+      exit(0);
+      return false;
+   }else{
+      fprintf(stderr, "Opened database successfully\n");
+   }
+
+  sql = "SELECT * FROM USERS WHERE USER_NAME == '" + username +"';";
+
+  nbyte = sql.length() + 1;
+
+  sqlite3_prepare(db, sql.c_str(), nbyte, &stmt, NULL);
+     
+     thestep = sqlite3_step( stmt );
+
+     if( thestep != SQLITE_ROW)
+     {
+      fprintf(stdout, "Step failed I repeat step failed\n");
+      sqlite3_close(db);
+      return false;
+     }
+     else
+     {
+       printf("%s", "its in there");
+     }
+
+    if( rc != SQLITE_OK ){
+         fprintf(stderr, "SQL error: %s\n", zErrMsg);
+         sqlite3_free(zErrMsg);
+         sqlite3_close(db);
+         return false;
+      }else{
+         fprintf(stdout, "user found in database successfully\n");
+       }
+    sqlite3_finalize(stmt);
+
+   sqlite3_close(db);
+
+  return true;
 }
 //DEMITRIOUS FILL IN HERE
-bool AddUserToDatabase(std::string username, std::string password, std::string salt, std::string iv, std::string key){
+bool AddUserToDatabase(std::string username, std::string password, std::string salt){
 
+  sqlite3 *db;
+   sqlite3_stmt * stmt;
+   char *zErrMsg = 0;
+   int rc;
+   std::string sql;
+   int nbyte;
+
+   rc = sqlite3_open("CryptChat.db", &db);
+
+    if( rc ){
+      fprintf(stderr, "Can't open database: %s\n", sqlite3_errmsg(db));
+      exit(0);
+      return false;
+   }else{
+      fprintf(stderr, "Opened database successfully\n");
+   }
+
+   //Insert statment
+   sql = "INSERT INTO USERS (USER_NAME, PASSWORD_HASH, SALT) VALUES ('" + username + "','" + password + "','" + salt +"');";
+
+nbyte = sql.length() + 1;
+printf("%d", nbyte);
+
+    sqlite3_prepare(db, sql.c_str(), nbyte, &stmt, NULL);
+     
+     if( sqlite3_step( stmt ) != SQLITE_DONE)
+     {
+      fprintf(stdout, "Step failed I repeat step failed2\n");
+      sqlite3_close(db);
+      return false;
+     }
+
+    if( rc != SQLITE_OK ){
+         fprintf(stderr, "SQL error: %s\n", zErrMsg);
+         sqlite3_free(zErrMsg);
+         sqlite3_close(db);
+         return false;
+      }else{
+         fprintf(stdout, "Records created successfully\n");
+       }
+    sqlite3_finalize(stmt);
+
+   sqlite3_close(db);
+
+return true;
 
 	return true;
 }
 
 bool ValidateUserInDatabase(std::string username, std::string password){
 
-return false;
+
+   sqlite3 *db;
+   sqlite3_stmt * stmt;
+   char *zErrMsg = 0;
+   int rc;
+   std::string sql, hashedpassword;
+   int nbyte;
+   int thestep;
+
+   //MARIO!!! hashedpassword = hasfunction(password) SO FIX BELOW;
+
+   hashedpassword = password;
+
+   rc = sqlite3_open("CryptChat.db", &db);
+
+    if( rc ){
+      fprintf(stderr, "Can't open database: %s\n", sqlite3_errmsg(db));
+      exit(0);
+      return false;
+   }else{
+      fprintf(stderr, "Opened database successfully\n");
+   }
+
+  sql = "SELECT * FROM USERS WHERE USER_NAME == '" + username +"' AND PASSWORD_HASH == '" + hashedpassword + "';";
+
+  nbyte = sql.length() + 1;
+
+  sqlite3_prepare(db, sql.c_str(), nbyte, &stmt, NULL);
+     
+     thestep = sqlite3_step( stmt );
+
+     if( thestep != SQLITE_ROW)
+     {
+      fprintf(stdout, "Step failed I repeat step failedz\n");
+      sqlite3_close(db);
+      return false;
+     }
+     else
+     {
+       printf("%s", "its in there");
+     }
+
+    if( rc != SQLITE_OK ){
+         fprintf(stderr, "SQL error: %s\n", zErrMsg);
+         sqlite3_free(zErrMsg);
+         sqlite3_close(db);
+         return false;
+      }else{
+         fprintf(stdout, "user found in database successfully\n");
+       }
+    sqlite3_finalize(stmt);
+
+   sqlite3_close(db);
+
+  return true;
 }
 
 std::string GetUserPassword(std::string input){
@@ -185,16 +326,16 @@ void LogUserOff(std::string username){
 	if(debugmode)
 		std::cout<<"mutex locking"<<std::endl;
 
-	pthread_mutex_lock(&mutex);
+	pthread_mutex_lock(&socket_mutex);
 	username_sockets->erase(username);
-	pthread_mutex_unlock(&mutex);
+	pthread_mutex_unlock(&socket_mutex);
 	if(debugmode)
 		std::cout<<"mutex released"<<std::endl;
 	if(debugmode)
 		std::cout<<"mutex locking"<<std::endl;
-	pthread_mutex_lock(&mutex);
+	pthread_mutex_lock(&keyiv_mutex);
 	username_keyiv->erase(username);
-	pthread_mutex_unlock(&mutex);
+	pthread_mutex_unlock(&keyiv_mutex);
 	if(debugmode)
 		std::cout<<"mutex released"<<std::endl;	
 
@@ -206,23 +347,28 @@ void StoreUserKeyIV(std::string username, std::string key_iv){
 	if(debugmode)
 		std::cout<<"mutex locking"<<std::endl;
 	
-	pthread_mutex_lock(&mutex);
+	pthread_mutex_lock(&keyiv_mutex);
 	username_keyiv->insert(std::map<std::string, std::string>::value_type(username, key_iv));
-	pthread_mutex_unlock(&mutex);
+	if(debugmode)
+		std::cout<<"map username: "<<username<<std::endl;
+	if(debugmode)
+		std::cout<<"map keyiv: "<<key_iv<<std::endl;
+	pthread_mutex_unlock(&keyiv_mutex);
 	if(debugmode)
 		std::cout<<"mutex released"<<std::endl;
 	if(debugmode)
 		std::cout<<"successfully stored: "<<username<<"'s credentials"<<std::endl;
-
+	if(debugmode)
+		std::cout<<"testing lookup: "<<username_keyiv->at(username)<<std::endl;
 }
 void LogUserOn(std::string username, int *client_socket){
 
 	if(debugmode)
 		std::cout<<"mutex locking"<<std::endl;
 	
-	pthread_mutex_lock(&mutex);
+	pthread_mutex_lock(&socket_mutex);
 	username_sockets->insert(std::map<std::string, int*>::value_type(username, client_socket));
-	pthread_mutex_unlock(&mutex);
+	pthread_mutex_unlock(&socket_mutex);
 	if(debugmode)
 		std::cout<<"mutex released"<<std::endl;
 	if(debugmode)
@@ -238,10 +384,13 @@ std::string GetReceiversIV(std::string username){
 		std::cout<<"about to try lookup key"<<std::endl;
 	try{	
 		if(debugmode)
-			std::cout<<"getting keyiv string"<<std::endl;
+			std::cout<<"getting keyiv(iv) string"<<std::endl;
 	
 		keyiv=username_keyiv->at(username);
-		iv=keyiv.substr(keyiv.find(star_delimiter)+star_delimiter.length());
+		if(debugmode)
+			std::cout<<"got keyiv string"<<std::endl;
+		iv=keyiv.substr(keyiv.find(colon_delimiter)+colon_delimiter.length());
+		iv=iv.substr(0, iv.find(colon_delimiter));
 		if(debugmode)
 			std::cout<<"parsed iv as string "<<iv<<std::endl;
 	}
@@ -260,11 +409,13 @@ std::string GetReceiversKey(std::string username){
 		std::cout<<"about to try lookup key"<<std::endl;
 	try{	
 		if(debugmode)
-			std::cout<<"getting keyiv string"<<std::endl;
+			std::cout<<"getting keyiv(key) string"<<std::endl;
 	
 		keyiv=username_keyiv->at(username);
-		key=keyiv.substr(keyiv.find(star_delimiter)+star_delimiter.length());
-		key=key.substr(0, key.find(star_delimiter));
+		if(debugmode)
+			std::cout<<"got keyiv string"<<std::endl;
+		//key=keyiv.substr(keyiv.find(colon_delimiter)+colon_delimiter.length());
+		key=keyiv.substr(0, keyiv.find(colon_delimiter));
 		if(debugmode)
 			std::cout<<"parsed key as string "<<key<<std::endl;
 	}
@@ -290,23 +441,52 @@ std::string DecryptMessage(Encryption cryptobject, std::string message, char * k
 	message=(char*)decrypt;
 	return message;
 }*/
-std::string EncryptMessage(Encryption cryptobject, std::string message, std::string input_key, std::string input_iv){
+
+/*std::string EncryptMessage(Encryption cryptobject, std::string message, std::string input_key, std::string input_iv){
+	if(debugmode)
+		std::cout<<"encrypt function: "<<message<<std::endl;
 	char * key=(char*)input_key.c_str();
 	char * iv=(char*)input_iv.c_str();
-	unsigned char * encrypt;
+	unsigned char * encrypt=NULL;
 	cryptobject.EncryptAes((unsigned char*)message.c_str(), message.size()+1, &encrypt, (unsigned char*)key, (unsigned char *)iv);
+	if(debugmode)
+		std::cout<<"encrypt function: "<<encrypt<<std::endl;
 	message=(char*)encrypt;
+	std::string retmess(message);
+	return retmess;
+}
 
-	return message;
+char* DecryptMessage(Encryption cryptobject, std::string message, std::string input_key, std::string input_iv){
+	if(debugmode)
+		std::cout<<"decrypt function: "<<message<<std::endl;
+	char * key=(char*)input_key.c_str();
+	if(debugmode)
+		std::cout<<"key casted as: "<<key<<std::endl;
+	char * iv=(char*)input_iv.c_str();
+	unsigned char * decrypt=NULL;
+	cryptobject.DecryptAes((unsigned char*)message.c_str(), message.size()+1, &decrypt, (unsigned char*)key, (unsigned char *)iv);
+	//message=(char*)decrypt;
+//	std::string retmess(message);
+	return (const char*) decrypt;
+}*/
+
+std::string EncryptMessage(Encryption cryptobject, std::string message, std::string input_key, std::string input_iv){
+    char * key=(char*)input_key.c_str();
+    char * iv=(char*)input_iv.c_str();
+    unsigned char * encrypt;
+    cryptobject.EncryptAes((unsigned char*)message.c_str(), message.size()+1, &encrypt, (unsigned char*)key, (unsigned char *)iv);
+    message=(char*)encrypt;
+
+    return message;
 }
 
 std::string DecryptMessage(Encryption cryptobject, std::string message, std::string input_key, std::string input_iv){
-	char * key=(char*)input_key.c_str();
-	char * iv=(char*)input_iv.c_str();
-	unsigned char * decrypt;
-	cryptobject.DecryptAes((unsigned char*)message.c_str(), message.size()+1, &decrypt, (unsigned char*)key, (unsigned char *)iv);
-	message=(char*)decrypt;
-	return message;
+    char * key=(char*)input_key.c_str();
+    char * iv=(char*)input_iv.c_str();
+    unsigned char * decrypt;
+    cryptobject.DecryptAes((unsigned char*)message.c_str(), message.size()+1, &decrypt, (unsigned char*)key, (unsigned char *)iv);
+    message=(char*)decrypt;
+    return message;
 }
 
 //ONLY SUPPORTING LOGIN, LOGOFF AND SENDMESSAGE
@@ -353,8 +533,10 @@ void *ThreadMain(void *clsk){
 		std::cout<<"Encryption object being created: "<<std::endl;
 
 	Encryption cryptobject;	
+	if(debugmode)
+		std::cout<<"object size: "<<sizeof(cryptobject)<<std::endl;
 	key=cryptobject.printKey();
-	iv=cryptobject.printKey();
+	iv=cryptobject.printIV();
 	key_iv=FormatKeyIV(key, iv);
 
 	if(debugmode){
@@ -388,6 +570,7 @@ void *ThreadMain(void *clsk){
 		std::string receiver;
 		std::string message;
 		std::string confirmation;
+		//std::string credreq;
 
 		switch(action){
 		case LOGIN:
@@ -398,7 +581,7 @@ void *ThreadMain(void *clsk){
 			password=GetUserPassword(input);
 			if(ValidateUserInDatabase(username, password)){
 				if(debugmode)
-				std::cout<<"invalid login"<<std::endl;
+					std::cout<<"invalid login"<<std::endl;
 				SendMessage(username, username,f);
 				pthread_exit(0);
 
@@ -406,14 +589,24 @@ void *ThreadMain(void *clsk){
 			LogUserOn(username, &client_socket);
 			StoreUserKeyIV(username, key_iv);
 			SendMessage(username, username,t);
+			memset(buffer,0,BUFFERSIZE);
+			read(client_socket, buffer, BUFFERSIZE);
+			{
+				std:: string credreq (buffer);
+				/*if(!(credreq.compare("CREDREQ")==0)){
+					close(client_socket);
+					//loggedon=false;
+					listening=false;
+					pthread_exit(0);
+			}*/
 			SendMessage(username, username,key_iv);
-
+			}
 			if(debugmode)
 				std::cout<<username<<std::endl;
 		//	loggedon=true;
 			break;
 
-		
+			
 		case LOGOFF:
 			//add validation code
 
@@ -434,22 +627,65 @@ void *ThreadMain(void *clsk){
 			break;
 		/*had to encsapulate in brackets due to scoping limitations*/
 		case SENDMESSAGE:{
-
+			/*
 			receiver=GetMessageReceiver(input);
 			message=GetMessage(input);
-
+			if(debugmode)
+				std::cout<<"calling decrypt for incoming"<<std::endl;
 			message=DecryptMessage(cryptobject,message,key,iv);
-
+			if(debugmode)
+				std::cout<<"decrypted message: "<<message<<std::endl;
 			std::string recv_key=GetReceiversKey(receiver);
-			std::string recv_iv=GetReceiversIV(iv);
-
+			std::string recv_iv=GetReceiversIV(receiver);
+			if(debugmode)
+				std::cout<<"calling encrypt for outgoing"<<std::endl;
 			message=EncryptMessage(cryptobject,message,recv_key, recv_iv);
 
 			message=FormatOutGoingMessage(username, message);
 			SendMessage(username, receiver,message);
 
-			break;
+			break;*/
+
+			receiver=GetMessageReceiver(input);
+			message=GetMessage(input);
+            //george's testing for encrypt and decrypt
+
+                       unsigned char* char_key=convertString(key);
+                       // key="1";
+                       unsigned char* char_iv=convertString(iv);
+                       // iv="1";
+
+
+                        unsigned char *decrypt = NULL;
+                        unsigned char *encmsg = NULL;
+                    //   Encryption crypto;
+
+                       cryptobject.DecryptAes(( unsigned char*)message.c_str(), message.size() + 1, &decrypt, ( unsigned char*)char_key, ( unsigned char*)char_iv);
+
+                      	if(debugmode)
+                       		std::cout<<"decrypt: "<<(const char *) decrypt<<"\n";
+			
+			message=(const char *) decrypt;
+
+			std::string recv_key=GetReceiversKey(receiver);
+			std::string recv_iv=GetReceiversIV(receiver);
+
+			unsigned char* char_recv_key=convertString(recv_key);
+			unsigned char* char_recv_iv=convertString(recv_iv);
+
+                        cryptobject.EncryptAes((const unsigned char*)message.c_str(), message.size() + 1, &encmsg, ( unsigned char*)char_recv_key, ( unsigned char*)char_recv_iv);
+
+                      	if(debugmode)
+				std::cout<<"encrypt: "<<(const char *) encmsg<<"\n";
+
+                        message=(const char *) encmsg;
+
+            message=FormatOutGoingMessage(username, message);
+            SendMessage(username, receiver,message);
+
+        		break;
 			}
+
 		case ADDUSER:
 
 			username=GetMessageReceiver(input);
@@ -465,7 +701,7 @@ void *ThreadMain(void *clsk){
 			salt=generateSalt();
 			if (debugmode)
 				std::cout<<"salt generated: "<<salt<<std::endl;
-			AddUserToDatabase(username, password, salt, iv, key);
+			AddUserToDatabase(username, password, salt);
 			//close(client_socket);
 			//pthread_exit(0);
 			break;

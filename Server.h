@@ -60,8 +60,23 @@ enum messagetype {
 std::string daemonflag="-D";
 std::string debugflag="-d";
 std::string portflag="-p";
+std::string dbflag="-b";
+std::string outflag="-o";
 
-std::string DecryptInput(std::string input);
+std::string to_delimiter="TO:";
+std::string from_delimiter="FROM:";
+std::string message_delimiter="MESSAGE:";
+std::string password_delimiter="PASS:";
+std::string star_delimiter="*";
+std::string equal_delimiter="=";
+std::string colon_delimiter=":";
+std::string t="TRUE";
+std::string f="FALSE";
+
+extern std::string database;
+extern std::string outfile;
+
+/*std::string DecryptInput(std::string input);
 
 std::string FormatOutGoingMessage(std::string username, std::string message);
 
@@ -87,7 +102,7 @@ messagetype ParseData(std::string input);
 
 void *ThreadMain(void *clsk);
 
-void signal_callback_handler(int signum);
+void signal_callback_handler(int signum);*/
 
 
 
