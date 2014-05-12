@@ -1,6 +1,6 @@
 /*
  *	Server.cpp
- *	v. 0.7
+ *	v. 0.8
  *	#2scoopz
  *
  *	Compile Instructions: Standard g++
@@ -16,12 +16,11 @@
  *
  *
  *	To Do:
- *	needs dynamic user messages. gonna have to parse input string better
- *	error handling
- *	
+ *	Change Password
+ *	Fix validation
+ *	RSA
  *	 
- *	plug in w. other parts
- *	safe/clean exits
+ *	safe/clean exits (handle client drop) (turn reads into if statements that handle disconnects)
  *	
  *
  *	can use pthread_detach(pthread_self()) at user logoff to detach thread
@@ -60,22 +59,22 @@ messagetype ParseData(std::string input){
 	std::string action=input.substr(0, input.find(equal_delimiter));
 	if(action.compare("LOGIN")==0){
 		if(debugmode)
-			std::cout<<"login"<<std::endl;
+			std::cout<<"login attempt"<<std::endl;
 		return LOGIN;
 	}
 	if(action.compare("LOGOFF")==0){
 		if(debugmode)
-			std::cout<<"logoff"<<std::endl;
+			std::cout<<"logoff attempt"<<std::endl;
 		return LOGOFF;
 	}
 	if(action.compare("SENDMESSAGE")==0){
 		if(debugmode)
-			std::cout<<"message"<<std::endl;
+			std::cout<<"message attempt"<<std::endl;
 		return SENDMESSAGE;
 	}
 	if(action.compare("ADDUSER")==0){
 		if(debugmode)
-			std::cout<<"adduser"<<std::endl;
+			std::cout<<"adduser attempt"<<std::endl;
 		return ADDUSER;
 	}
 	else
@@ -90,23 +89,24 @@ void *ThreadMain(void *clsk){
 	char buffer[BUFFERSIZE];
 	std::string username, password, salt, iv, key, key_iv;
 
+	bool loggedon=false;
+
 	if(debugmode)
 		std::cout<<"Encryption object being created: "<<std::endl;
 
 	Encryption cryptobject;	
-	if(debugmode)
-		std::cout<<"object size: "<<sizeof(cryptobject)<<std::endl;
-	key=cryptobject.printKey();
-	iv=cryptobject.printIV();
-	key_iv=FormatKeyIV(key, iv);
 
-	if(debugmode){
+//	key=cryptobject.printKey();
+//	iv=cryptobject.printIV();
+//	key_iv=FormatKeyIV(key, iv);
+
+/*	if(debugmode){
 		std::cout<<"Key generated as: "<<std::endl;
 		std::cout<<key<<std::endl;
 		std::cout<<"IV generated as: "<<std::endl;
 		std::cout<<iv<<std::endl;
 
-	}
+	} */
 
 	int client_socket=*((int*)clsk);
 
@@ -116,16 +116,20 @@ void *ThreadMain(void *clsk){
 	bool listening=true;
 	while(listening){
 		if(debugmode)
-			std::cout<<"Recieving input"<<std::endl;
+			std::cout<<"waiting for input"<<std::endl;
 		memset(buffer,0,BUFFERSIZE);
-		read(client_socket, buffer, BUFFERSIZE);
+		if(read(client_socket, buffer, BUFFERSIZE)<0){
+			if(debugmode)
+				std::cout<<"client dropped"<<std::endl;
+			close(client_socket);
+			pthread_exit(0);
+		}
 		if(debugmode)
-			std::cout<<"Successfully received message"<<std::endl;
+			std::cout<<"Successfully received data"<<std::endl;
 		std::string input(buffer);
+
 		if(debugmode)
-		//	std::cout<<"decrypting input..."<<std::endl;
-		if(debugmode)
-			std::cout<<"converting message type"<<std::endl;
+			std::cout<<"parsing data"<<std::endl;
 		messagetype action=ParseData(input);
 
 		std::string receiver;
@@ -135,18 +139,35 @@ void *ThreadMain(void *clsk){
 
 		switch(action){
 		case LOGIN:
-			//add validation code
-
+			
 
 			username=GetUserName(input);
 			password=GetUserPassword(input);
-			if(ValidateUserInDatabase(username, password)){
+			salt=GetUserSalt(username);
+			loggedon=ValidateUserInDatabase(username, password);
+			if(!loggedon){
 				if(debugmode)
-					std::cout<<"invalid login"<<std::endl;
+					std::cout<<"invalid login credentials"<<std::endl;
 				SendMessage(username, username,f);
+				close(client_socket);
 				pthread_exit(0);
+				listening=false;
+				break;
 
 			}
+
+			key=cryptobject.printKey();
+			iv=cryptobject.printIV();
+			key_iv=FormatKeyIV(key, iv);
+
+			if(debugmode){
+			std::cout<<"Key generated as: "<<std::endl;
+			std::cout<<key<<std::endl;
+			std::cout<<"IV generated as: "<<std::endl;
+			std::cout<<iv<<std::endl;
+
+			}
+
 			LogUserOn(username, &client_socket);
 			StoreUserKeyIV(username, key_iv);
 			SendMessage(username, username,t);
@@ -162,27 +183,19 @@ void *ThreadMain(void *clsk){
 			}
 			SendMessage(username, username,key_iv);
 			}
-			if(debugmode)
-				std::cout<<username<<std::endl;
 
 			break;
 
 			
 		case LOGOFF:
-			//add validation code
+		
 			
-			if(debugmode)
-				std::cout<<IsUserOnline(username)<<std::endl;
-
-			if(debugmode)
-				std::cout<<"checking for "<<username<<std::endl;
 
 			LogUserOff(username);
-			if(debugmode)
-				std::cout<<IsUserOnline(username)<<std::endl;
+	
 
 			close(client_socket);
-			//loggedon=false;
+
 			listening=false;
 			pthread_exit(0);
 			break;

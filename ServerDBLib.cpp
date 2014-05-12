@@ -1,7 +1,65 @@
 //#include "Server.h"
 #include "ServerDBLib.h"
 
+bool GetUserSalt(std::string username){
+sqlite3 *db;
+   sqlite3_stmt * stmt;
+   char *zErrMsg = 0;
+   int rc;
+   std::string sql;
+   int nbyte;
+   int thestep;
+	
+   rc = sqlite3_open(database, &db);
 
+    if( rc ){
+	if(debugmode)
+      fprintf(stderr, "Can't open database: %s\n", sqlite3_errmsg(db));
+      exit(0);
+      return false;
+   }else{
+	if(debugmode)
+      fprintf(stderr, "Opened database successfully\n");
+   }
+
+  sql = "SELECT salt FROM USERS WHERE USER_NAME == '" + username +"';";
+
+  nbyte = sql.length() + 1;
+
+  sqlite3_prepare(db, sql.c_str(), nbyte, &stmt, NULL);
+     
+     thestep = sqlite3_step( stmt );
+
+    if( thestep != SQLITE_ROW)
+     {
+	if(debugmode)
+      fprintf(stdout, "Step failed I repeat step failed\n");
+      sqlite3_close(db);
+      return false;
+     }
+     else
+     {
+	if(debugmode)
+       printf("%s", "its in there");
+     }
+
+    if( rc != SQLITE_OK ){
+	if(debugmode)
+         fprintf(stderr, "SQL error: %s\n", zErrMsg);
+         sqlite3_free(zErrMsg);
+         sqlite3_close(db);
+         return false;
+      }else{
+	if(debugmode)
+         fprintf(stdout, "user found in database successfully\n");
+       }
+	
+    sqlite3_finalize(stmt);
+
+   sqlite3_close(db);
+
+  return thestep;
+}
 
 bool IsUserInDatabase(std::string username){
 sqlite3 *db;
