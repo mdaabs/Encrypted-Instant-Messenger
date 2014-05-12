@@ -45,7 +45,8 @@
 std::unordered_map<std::string, int*> *username_sockets=new std::unordered_map<std::string, int*>();
 std::unordered_map<std::string, std::string> *username_keyiv=new std::unordered_map<std::string, std::string>();
 
-pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t socket_mutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t keyiv_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 std::string to_delimiter="TO:";
 std::string from_delimiter="FROM:";
@@ -62,13 +63,7 @@ bool daemonize=false;
 bool debugmode=false;
 bool portspecified=false;
 
-	//Encryption ~cryptobject();
-//MARIO FILL IN HERE
-std::string DecryptInput(std::string input){
 
-		
-	return input;
-}
 
 std::string FormatKeyIV(std::string key, std::string iv){
 	std::string formatted_string=key+colon_delimiter+iv;
@@ -93,8 +88,6 @@ std::string GetMessage(std::string input){
 		std::cout<<"message is: "<<message<<std::endl;
 	return message;
 }
-
-
 
 
 std::string GetMessageReceiver(std::string input){
@@ -185,16 +178,16 @@ void LogUserOff(std::string username){
 	if(debugmode)
 		std::cout<<"mutex locking"<<std::endl;
 
-	pthread_mutex_lock(&mutex);
+	pthread_mutex_lock(&socket_mutex);
 	username_sockets->erase(username);
-	pthread_mutex_unlock(&mutex);
+	pthread_mutex_unlock(&socket_mutex);
 	if(debugmode)
 		std::cout<<"mutex released"<<std::endl;
 	if(debugmode)
 		std::cout<<"mutex locking"<<std::endl;
-	pthread_mutex_lock(&mutex);
+	pthread_mutex_lock(&keyiv_mutex);
 	username_keyiv->erase(username);
-	pthread_mutex_unlock(&mutex);
+	pthread_mutex_unlock(&keyiv_mutex);
 	if(debugmode)
 		std::cout<<"mutex released"<<std::endl;	
 
@@ -206,13 +199,13 @@ void StoreUserKeyIV(std::string username, std::string key_iv){
 	if(debugmode)
 		std::cout<<"mutex locking"<<std::endl;
 	
-	pthread_mutex_lock(&mutex);
+	pthread_mutex_lock(&keyiv_mutex);
 	username_keyiv->insert(std::map<std::string, std::string>::value_type(username, key_iv));
 	if(debugmode)
 		std::cout<<"map username: "<<username<<std::endl;
 	if(debugmode)
 		std::cout<<"map keyiv: "<<key_iv<<std::endl;
-	pthread_mutex_unlock(&mutex);
+	pthread_mutex_unlock(&keyiv_mutex);
 	if(debugmode)
 		std::cout<<"mutex released"<<std::endl;
 	if(debugmode)
@@ -225,9 +218,9 @@ void LogUserOn(std::string username, int *client_socket){
 	if(debugmode)
 		std::cout<<"mutex locking"<<std::endl;
 	
-	pthread_mutex_lock(&mutex);
+	pthread_mutex_lock(&socket_mutex);
 	username_sockets->insert(std::map<std::string, int*>::value_type(username, client_socket));
-	pthread_mutex_unlock(&mutex);
+	pthread_mutex_unlock(&socket_mutex);
 	if(debugmode)
 		std::cout<<"mutex released"<<std::endl;
 	if(debugmode)
@@ -243,7 +236,7 @@ std::string GetReceiversIV(std::string username){
 		std::cout<<"about to try lookup key"<<std::endl;
 	try{	
 		if(debugmode)
-			std::cout<<"getting keyiv string"<<std::endl;
+			std::cout<<"getting keyiv(iv) string"<<std::endl;
 	
 		keyiv=username_keyiv->at(username);
 		if(debugmode)
@@ -268,7 +261,7 @@ std::string GetReceiversKey(std::string username){
 		std::cout<<"about to try lookup key"<<std::endl;
 	try{	
 		if(debugmode)
-			std::cout<<"getting keyiv string"<<std::endl;
+			std::cout<<"getting keyiv(key) string"<<std::endl;
 	
 		keyiv=username_keyiv->at(username);
 		if(debugmode)
@@ -505,8 +498,8 @@ void *ThreadMain(void *clsk){
 
 			break;*/
 
-            receiver=GetMessageReceiver(input);
-            message=GetMessage(input);
+			receiver=GetMessageReceiver(input);
+			message=GetMessage(input);
             //george's testing for encrypt and decrypt
 
                        unsigned char* char_key=convertString(key);
@@ -517,27 +510,26 @@ void *ThreadMain(void *clsk){
 
                         unsigned char *decrypt = NULL;
                         unsigned char *encmsg = NULL;
-                        Encryption crypto;
-                       crypto.DecryptAes(( unsigned char*)message.c_str(), message.size() + 1, &decrypt, ( unsigned char*)char_key, ( unsigned char*)char_iv);
+                    //   Encryption crypto;
+
+                       cryptobject.DecryptAes(( unsigned char*)message.c_str(), message.size() + 1, &decrypt, ( unsigned char*)char_key, ( unsigned char*)char_iv);
+
                       	if(debugmode)
                        		std::cout<<"decrypt: "<<(const char *) decrypt<<"\n";
+			
 			message=(const char *) decrypt;
 
-           // message=DecryptMessage(cryptobject,message,key,iv);
+			std::string recv_key=GetReceiversKey(receiver);
+			std::string recv_iv=GetReceiversIV(receiver);
 
-            std::string recv_key=GetReceiversKey(receiver);
-            std::string recv_iv=GetReceiversIV(iv);
+			unsigned char* char_recv_key=convertString(recv_key);
+			unsigned char* char_recv_iv=convertString(recv_iv);
 
-             unsigned char* char_recv_key=convertString(recv_key);
-              unsigned char* char_recv_iv=convertString(recv_iv);
-            //message=EncryptMessage(cryptobject,message,recv_key, recv_iv);
+                        cryptobject.EncryptAes((const unsigned char*)message.c_str(), message.size() + 1, &encmsg, ( unsigned char*)char_recv_key, ( unsigned char*)char_recv_iv);
 
-
-
-
-                        crypto.EncryptAes((const unsigned char*)message.c_str(), message.size() + 1, &encmsg, ( unsigned char*)char_recv_key, ( unsigned char*)char_recv_iv);
                       	if(debugmode)
 				std::cout<<"encrypt: "<<(const char *) encmsg<<"\n";
+
                         message=(const char *) encmsg;
 
             message=FormatOutGoingMessage(username, message);
@@ -545,6 +537,7 @@ void *ThreadMain(void *clsk){
 
             break;
 			}
+
 		case ADDUSER:
 
 			username=GetMessageReceiver(input);
