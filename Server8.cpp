@@ -44,7 +44,7 @@
 //std::unordered_map<std::string, std::string> *username_keyiv=new std::unordered_map<std::string, std::string>();
 
 
-std::string database;
+char * database;
 std::string outfile;
 //int zombie_threads=0;
 bool daemonize=false;
@@ -251,8 +251,8 @@ void *ThreadMain(void *clsk){
 
 		case ADDUSER:
 
-			username=GetMessageReceiver(input);
-
+			username=GetUserName(input);
+			password=GetUserPassword(input);
 			if(IsUserInDatabase(username)){
 				if(debugmode)
 				std::cout<<"user: "<<username<<"username taken"<<std::endl;

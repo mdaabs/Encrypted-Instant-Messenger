@@ -82,7 +82,7 @@ extern std::string colon_delimiter=":";
 extern std::string t="TRUE";
 extern std::string f="FALSE";
 
-extern std::string database;
+extern char * database;
 extern std::string outfile;
 extern bool debugmode;
 

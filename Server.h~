@@ -44,8 +44,8 @@
 
 #include "sqlite3.h"
 
-#include "ServerLib.h"
-#include "ServerDBLib.h"
+//#include "ServerLib.h"
+//#include "ServerDBLib.h"
 //#define PRINT_KEYS
 
 //HARDWARE DEPENDANT

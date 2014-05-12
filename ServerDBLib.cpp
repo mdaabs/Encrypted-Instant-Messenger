@@ -11,14 +11,16 @@ sqlite3 *db;
    std::string sql;
    int nbyte;
    int thestep;
-
-   rc = sqlite3_open("testdb.db", &db);
+	
+   rc = sqlite3_open(database, &db);
 
     if( rc ){
+	if(debugmode)
       fprintf(stderr, "Can't open database: %s\n", sqlite3_errmsg(db));
       exit(0);
       return false;
    }else{
+	if(debugmode)
       fprintf(stderr, "Opened database successfully\n");
    }
 
@@ -32,21 +34,25 @@ sqlite3 *db;
 
      if( thestep != SQLITE_ROW)
      {
+	if(debugmode)
       fprintf(stdout, "Step failed I repeat step failed\n");
       sqlite3_close(db);
       return false;
      }
      else
      {
+	if(debugmode)
        printf("%s", "its in there");
      }
 
     if( rc != SQLITE_OK ){
+	if(debugmode)
          fprintf(stderr, "SQL error: %s\n", zErrMsg);
          sqlite3_free(zErrMsg);
          sqlite3_close(db);
          return false;
       }else{
+	if(debugmode)
          fprintf(stdout, "user found in database successfully\n");
        }
     sqlite3_finalize(stmt);
@@ -65,13 +71,15 @@ bool AddUserToDatabase(std::string username, std::string password, std::string s
    std::string sql;
    int nbyte;
 
-   rc = sqlite3_open("CryptChat.db", &db);
+   rc = sqlite3_open(database, &db);
 
     if( rc ){
+	if(debugmode)
       fprintf(stderr, "Can't open database: %s\n", sqlite3_errmsg(db));
       exit(0);
       return false;
    }else{
+	if(debugmode)
       fprintf(stderr, "Opened database successfully\n");
    }
 
@@ -85,17 +93,20 @@ printf("%d", nbyte);
      
      if( sqlite3_step( stmt ) != SQLITE_DONE)
      {
+	if(debugmode)
       fprintf(stdout, "Step failed I repeat step failed2\n");
       sqlite3_close(db);
       return false;
      }
 
     if( rc != SQLITE_OK ){
+	if(debugmode)
          fprintf(stderr, "SQL error: %s\n", zErrMsg);
          sqlite3_free(zErrMsg);
          sqlite3_close(db);
          return false;
       }else{
+	if(debugmode)
          fprintf(stdout, "Records created successfully\n");
        }
     sqlite3_finalize(stmt);
@@ -122,13 +133,15 @@ bool ValidateUserInDatabase(std::string username, std::string password){
 
    hashedpassword = password;
 
-   rc = sqlite3_open("CryptChat.db", &db);
+   rc = sqlite3_open(database, &db);
 
     if( rc ){
+	if(debugmode)
       fprintf(stderr, "Can't open database: %s\n", sqlite3_errmsg(db));
       exit(0);
       return false;
    }else{
+	if(debugmode)
       fprintf(stderr, "Opened database successfully\n");
    }
 
@@ -142,21 +155,25 @@ bool ValidateUserInDatabase(std::string username, std::string password){
 
      if( thestep != SQLITE_ROW)
      {
+	if(debugmode)
       fprintf(stdout, "Step failed I repeat step failedz\n");
       sqlite3_close(db);
       return false;
      }
      else
      {
+	if(debugmode)
        printf("%s", "its in there");
      }
 
     if( rc != SQLITE_OK ){
+	if(debugmode)
          fprintf(stderr, "SQL error: %s\n", zErrMsg);
          sqlite3_free(zErrMsg);
          sqlite3_close(db);
          return false;
       }else{
+	if(debugmode)
          fprintf(stdout, "user found in database successfully\n");
        }
     sqlite3_finalize(stmt);
