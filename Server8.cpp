@@ -326,37 +326,31 @@ int main(int argc, char * argv[]){
 		}
 		if(argv[i]==dbflag){
 			dbspecified=true;
-		//	std::cout<<dbspecified<<std::endl;
-			database = atoi(argv[i+1]);
+			database = argv[i+1];
 		}
 		if(argv[i]==outflag){
 			outfilespecified=true;
 			outfile = atoi(argv[i+1]);
 		}
 
-		if(!dbspecified){
-			std::cerr<<"No database specified"<<std::endl;
-			exit(-1);
-		}
 
-		if(daemonize&&debugmode){
-			std::cerr<<"Can't debug and daemonize"<<std::endl;
-			exit(-1);
-		}
 	}
 
-	//Check for argument size
-	/*if(argc < 2){
-		std::cerr<<"Incorrect Syntax"<<std::endl;
-		std::cerr<<"Runtime Instructions: ./Server <Host Port>"<<std::endl;
+	if(!dbspecified){
+		std::cerr<<"No database specified"<<std::endl;
 		exit(-1);
-	}*/
+	}
 	if(!portspecified){
 		std::cerr<<"no port specified"<<std::endl;
     		exit(-1);
 	}
 
-	//server_port = atoi(argv[1]);
+	if(daemonize&&debugmode){
+		std::cerr<<"Can't debug and daemonize"<<std::endl;
+		exit(-1);
+	}
+
+
 	if(debugmode)
 		std::cout<<"Hosting on port: "<<server_port<<std::endl;
 

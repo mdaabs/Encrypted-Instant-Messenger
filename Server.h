@@ -75,6 +75,7 @@ std::string f="FALSE";
 
 extern std::string database;
 extern std::string outfile;
+extern bool debugmode;
 
 /*std::string DecryptInput(std::string input);
 

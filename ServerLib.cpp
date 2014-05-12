@@ -1,5 +1,5 @@
 #include "Server.h"
-extern bool debugmode;
+
 
 extern std::unordered_map<std::string, int*> *username_sockets=new std::unordered_map<std::string, int*>();
 extern std::unordered_map<std::string, std::string> *username_keyiv=new std::unordered_map<std::string, std::string>();
