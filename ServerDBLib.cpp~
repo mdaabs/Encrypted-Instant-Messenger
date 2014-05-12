@@ -70,7 +70,7 @@ bool AddUserToDatabase(std::string username, std::string password, std::string s
    int rc;
    std::string sql;
    int nbyte;
-
+password=generateHash(salt, password);
    rc = sqlite3_open(database, &db);
 
     if( rc ){

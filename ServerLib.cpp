@@ -202,6 +202,15 @@ std::string GetReceiversKey(std::string username){
 	return key;
 }
 
+void endprocess(){
+	if (debugmode)
+		std::cout<<"terminating"<<std::endl;
+	delete username_sockets;
+	delete username_keyiv;
+}
+
+
+
 /*std::string EncryptMessage(Encryption cryptobject, std::string message, char * key, char * iv){
 	unsigned char * encrypt;
 	cryptobject.EncryptAes((unsigned char*)message.c_str(), message.size()+1, &encrypt, (unsigned char*)key, (unsigned char *)iv);
@@ -244,7 +253,7 @@ char* DecryptMessage(Encryption cryptobject, std::string message, std::string in
 	//message=(char*)decrypt;
 //	std::string retmess(message);
 	return (const char*) decrypt;
-}*/
+
 
 std::string EncryptMessage(Encryption cryptobject, std::string message, std::string input_key, std::string input_iv){
     char * key=(char*)input_key.c_str();
@@ -264,12 +273,5 @@ std::string DecryptMessage(Encryption cryptobject, std::string message, std::str
     message=(char*)decrypt;
     return message;
 }
-
-void endprocess(){
-	if (debugmode)
-		std::cout<<"terminating"<<std::endl;
-	delete username_sockets;
-	delete username_keyiv;
-}
-
+}*/
 

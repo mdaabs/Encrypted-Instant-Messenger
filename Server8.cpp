@@ -55,26 +55,6 @@ bool outfilespecified=false;
 
 
 
-//DEMITRIOUS FILL IN HERE
-/*bool IsUserInDatabase(std::string username){
-
-	return true;
-}
-//DEMITRIOUS FILL IN HERE
-bool AddUserToDatabase(std::string username, std::string password, std::string salt){
-
-
-	return true;
-}
-
-bool ValidateUserInDatabase(std::string username, std::string password){
-
-return false;
-}*/
-
-
-
-//ONLY SUPPORTING LOGIN, LOGOFF AND SENDMESSAGE
 messagetype ParseData(std::string input){
 
 	std::string action=input.substr(0, input.find(equal_delimiter));
@@ -156,7 +136,7 @@ void *ThreadMain(void *clsk){
 		switch(action){
 		case LOGIN:
 			//add validation code
-
+			
 
 			username=GetUserName(input);
 			password=GetUserPassword(input);
@@ -190,7 +170,7 @@ void *ThreadMain(void *clsk){
 			
 		case LOGOFF:
 			//add validation code
-
+			
 			if(debugmode)
 				std::cout<<IsUserOnline(username)<<std::endl;
 
@@ -211,13 +191,10 @@ void *ThreadMain(void *clsk){
 
 			receiver=GetMessageReceiver(input);
 			message=GetMessage(input);
-            //george's testing for encrypt and decrypt
 
                        unsigned char* char_key=convertString(key);
-                       // key="1";
-                       unsigned char* char_iv=convertString(iv);
-                       // iv="1";
 
+                       unsigned char* char_iv=convertString(iv);
 
                         unsigned char *decrypt = NULL;
                         unsigned char *encmsg = NULL;
@@ -262,6 +239,7 @@ void *ThreadMain(void *clsk){
 			}
 
 			salt=generateSalt();
+	//		password=generateHash(salt, password);
 			if (debugmode)
 				std::cout<<"salt generated: "<<salt<<std::endl;
 			AddUserToDatabase(username, password, salt);
