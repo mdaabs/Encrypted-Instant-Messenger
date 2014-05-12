@@ -1,6 +1,8 @@
 //#include "Server.h"
 #include "ServerLib.h"
 
+/*extern std::unordered_map<std::string, int*> *username_sockets=new std::unordered_map<std::string, int*>();
+extern std::unordered_map<std::string, std::string> *username_keyiv=new std::unordered_map<std::string, std::string>();*/
 
 pthread_mutex_t socket_mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t keyiv_mutex = PTHREAD_MUTEX_INITIALIZER;

@@ -109,7 +109,7 @@ bool IsUserOnline(std::string username){
 }
 
 //DEMITRIOUS FILL IN HERE
-/*bool IsUserInDatabase(std::string username){
+bool IsUserInDatabase(std::string username){
 sqlite3 *db;
    sqlite3_stmt * stmt;
    char *zErrMsg = 0;
@@ -270,7 +270,7 @@ bool ValidateUserInDatabase(std::string username, std::string password){
    sqlite3_close(db);
 
   return true;
-}*/
+}
 
 std::string GetUserPassword(std::string input){
 	std::string password=input.substr(input.find(star_delimiter)+((password_delimiter.length())+star_delimiter.length()));

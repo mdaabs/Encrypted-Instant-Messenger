@@ -39,7 +39,7 @@
 //Standard C libraries
 #include "Server.h"
 #include "ServerLib.cpp"
-#include "ServerDBLib.cpp"
+
 //std::unordered_map<std::string, int*> *username_sockets=new std::unordered_map<std::string, int*>();
 //std::unordered_map<std::string, std::string> *username_keyiv=new std::unordered_map<std::string, std::string>();
 
