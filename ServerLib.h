@@ -29,6 +29,10 @@ std::string GetReceiversIV(std::string username);
 
 std::string GetReceiversKey(std::string username);
 
+std::string GetOldPassword(std::string input);
+
+std::string GetNewPassword(std::string input);
+
 void endprocess();
 
 #endif

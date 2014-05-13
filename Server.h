@@ -76,6 +76,7 @@ extern std::string to_delimiter="TO:";
 extern std::string from_delimiter="FROM:";
 extern std::string message_delimiter="MESSAGE:";
 extern std::string password_delimiter="PASS:";
+extern std::string new_password_delimiter="NEWPASS:";
 extern std::string star_delimiter="*";
 extern std::string equal_delimiter="=";
 extern std::string colon_delimiter=":";

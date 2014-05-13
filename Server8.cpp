@@ -89,6 +89,11 @@ messagetype ParseData(std::string input){
 			std::cout<<"adduser attempt"<<std::endl;
 		return ADDUSER;
 	}
+	if(action.compare("CHANGEPASSWORD")==0){
+		if(debugmode)
+			std::cout<<"password change attempt"<<std::endl;
+		return CHANGEPASSWORD;
+	}
 	else
 		return INVALID;
 
@@ -310,16 +315,33 @@ void *ThreadMain(void *clsk){
 			if (debugmode)
 				std::cout<<"salt generated: "<<salt<<std::endl;
 			AddUserToDatabase(username, password, salt);
-			//close(client_socket);
-			//pthread_exit(0);
+			close(client_socket);
+			pthread_exit(0);
 			break;
 
-		case CHANGEPASSWORD:
+		case CHANGEPASSWORD:{
+			//add validation code
+			//IsUserInDatabase(username);
+			std::string username=GetUserName(input);
+			std::string oldpassword=GetOldPassword(input);
+			salt=GetUserSalt(username);
+			oldpassword=generateHash(salt, oldpassword);
+			bool validated=ValidateUserInDatabase(username, oldpassword);
+			if(!validated){
+				if(debugmode)
+					std::cout<<"invalid credentials"<<std::endl;
+				SendMessage(username, username,f);
+				close(client_socket);
+				pthread_exit(0);
 
-			IsUserInDatabase(username);
-
+			}
+			std::string newpassword=GetNewPassword(input);
+			UpdatePassword(username, newpassword);
+			SendMessage(username, username,t);
+			close(client_socket);
+			pthread_exit(0);
 			break;
-
+		}
 		case INVALID:
 			if(debugmode)
 				std::cout<<"invalid command received"<<std::endl;			

@@ -64,6 +64,22 @@ std::string GetUserPassword(std::string input){
 	return password;
 
 }
+std::string GetNewPassword(std::string input){
+	std::string password=input.substr(input.find(new_password_delimiter)+(new_password_delimiter.length()));
+		if(debugmode)
+			std::cout<<"newpass: "<<password<<" "<<std::endl;
+	return password;
+
+}
+
+std::string GetOldPassword(std::string input){
+	std::string password=input.substr(input.find(password_delimiter)+(password_delimiter.length()));
+	password=password.substr(0,password.find(star_delimiter));
+		if(debugmode)
+			std::cout<<"oldpass: "<<password<<" "<<std::endl;
+	return password;
+
+}
 
 std::string GetUserName(std::string input){
 

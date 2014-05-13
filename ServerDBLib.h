@@ -11,4 +11,6 @@ bool ValidateUserInDatabase(std::string username, std::string password);
 
 std::string GetUserSalt(std::string username);
 
+bool UpdatePassword(std::string username, std::string newPassWord);
+
 #endif
