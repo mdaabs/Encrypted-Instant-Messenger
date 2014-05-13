@@ -40,6 +40,7 @@
  *	-d debug
  *	-D daemonize
  *	-o logfile (uninmplemented)
+ *	-i initialize database (unimplemented)
  *
  *
  *	
