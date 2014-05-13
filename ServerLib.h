@@ -33,6 +33,8 @@ std::string GetOldPassword(std::string input);
 
 std::string GetNewPassword(std::string input);
 
+void WriteToLog(std::string filename, std::string message);
+
 void endprocess();
 
 #endif

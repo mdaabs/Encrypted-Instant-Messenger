@@ -57,6 +57,9 @@ pthread_mutex_t db_mutex = PTHREAD_MUTEX_INITIALIZER;
 //	pthread_mutex_lock(&db_mutex);
 //	pthread_mutex_unlock(&db_mutex);
 
+//std::ofstream logfile;
+//std::string outfile;    
+
 char * database;
 std::string outfile;
 //int zombie_threads=0;
@@ -104,7 +107,8 @@ messagetype ParseData(std::string input){
 
 void *ThreadMain(void *clsk){
 	pthread_detach(pthread_self());
-
+	time_t curr_time = time(0);   // get time now
+   	struct tm * now = localtime( & curr_time );
 	char buffer[BUFFERSIZE];
 	std::string username, password, salt, iv, key, key_iv;
 
@@ -199,6 +203,13 @@ void *ThreadMain(void *clsk){
 			loggedon=ValidateUserInDatabase(username, password);
 			pthread_mutex_unlock(&db_mutex);
 
+			if(outfilespecified){
+				std::ostringstream stream;
+				stream<<"unauthorized logon"<<std::endl;
+				std::string logmessage=stream.str();
+				WriteToLog(outfile, logmessage);
+			}
+
 			if(!loggedon){
 				if(debugmode)
 					std::cout<<"invalid login credentials"<<std::endl;
@@ -242,6 +253,12 @@ void *ThreadMain(void *clsk){
 					pthread_exit(0);
 				}
 				SendMessage(username, username,key_iv);
+			}
+			if(outfilespecified){
+			std::ostringstream stream;
+			stream<<username<<" logged on"<<std::endl;
+			std::string logmessage=stream.str();
+			WriteToLog(outfile, logmessage);
 			}
 
 			break;
@@ -371,6 +388,12 @@ void *ThreadMain(void *clsk){
 			pthread_mutex_unlock(&db_mutex);
 
 			if(!validated){
+				if(outfilespecified){
+					std::ostringstream stream;
+					stream<<"unauthorized password change"<<std::endl;
+					std::string logmessage=stream.str();
+					WriteToLog(outfile, logmessage);
+				}
 				if(debugmode)
 					std::cout<<"invalid credentials"<<std::endl;
 				write(client_socket, f.c_str(), f.size());
@@ -384,6 +407,12 @@ void *ThreadMain(void *clsk){
 			bool updated=UpdatePassword(username, newpassword);
 			pthread_mutex_unlock(&db_mutex);
 			if(updated){
+				if(outfilespecified){
+					std::ostringstream stream;
+					stream<<"password changed for: "<<username<<std::endl;
+					std::string logmessage=stream.str();
+					WriteToLog(outfile, logmessage);
+				}
 			SendMessage(username, username,t);
 			close(client_socket);
 			pthread_exit(0);
@@ -398,7 +427,13 @@ void *ThreadMain(void *clsk){
 		}
 		case INVALID:
 			if(debugmode)
-				std::cout<<"invalid command received"<<std::endl;		
+				std::cout<<"invalid command received"<<std::endl;
+				if(outfilespecified){
+					std::ostringstream stream;
+					stream<<"invalid signal received"<<std::endl;
+					std::string logmessage=stream.str();
+					WriteToLog(outfile, logmessage);
+				}		
 			write(client_socket, f.c_str(), f.size());
 			close(client_socket);
 			pthread_exit(0);
@@ -421,6 +456,9 @@ void *ThreadMain(void *clsk){
 
 void signal_callback_handler(int signum){
 	//std::cout<<"handled sig exit"<<std::endl;
+	if(outfilespecified){
+//		logfile.close();
+	}
 	endprocess();
 	exit(signum);
 
@@ -431,7 +469,6 @@ int main(int argc, char * argv[]){
 	struct sockaddr_in server_address, client_address;
 	unsigned short server_port;
 	unsigned int address_length;
-
 	pid_t pid;
 	signal(SIGINT,signal_callback_handler);
 	//if (typeid(a) == typeid(int()))
@@ -457,10 +494,13 @@ int main(int argc, char * argv[]){
 		}
 		if(argv[i]==outflag){
 			outfilespecified=true;
-			outfile = atoi(argv[i+1]);
+			outfile = argv[i+1];
 		}
 
 
+	}
+	if(outfilespecified){
+		std::cout<<"outfile: "<<outfile<<std::endl;
 	}
 
 	if(initializedatabase&&(daemonize||portspecified||dbspecified)){

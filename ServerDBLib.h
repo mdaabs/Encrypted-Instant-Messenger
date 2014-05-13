@@ -15,4 +15,6 @@ bool UpdatePassword(std::string username, std::string newPassWord);
 
 bool InitializeDatabase();
 
+
+
 #endif

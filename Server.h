@@ -14,6 +14,7 @@
 #include <unistd.h>
 #include <pthread.h>
 #include <signal.h>
+#include <ctime>
 //C Networking libraries
 #include <netdb.h>
 #include <sys/types.h>
@@ -26,6 +27,7 @@
 #include <vector>
 #include <string>
 #include <exception>
+
 //C++ Standard data structures (included in std namespace)
 #include <map>
 #include <queue>
@@ -85,7 +87,7 @@ extern std::string t="TRUE";
 extern std::string f="FALSE";
 
 extern char * database;
-extern std::string outfile;
+//extern std::string outfile;
 extern bool debugmode;
 //extern sqlite3 *db;
 

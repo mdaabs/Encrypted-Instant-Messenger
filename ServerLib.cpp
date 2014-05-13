@@ -23,6 +23,22 @@ std::string FormatOutGoingMessage(std::string username, std::string message){
 
 }
 
+void WriteToLog(std::string filename, std::string message){
+	std::ofstream logfile;
+
+	time_t curr_time = time(0);
+    	struct tm * now = localtime( & curr_time );
+	std::ostringstream stream;
+	stream << "Month: " << now->tm_mon << " Day: " << now->tm_mday << " Hour: " << now->tm_hour << " Min: " << now->tm_min << ": " << message;
+	std::string timestring=stream.str();
+	if(debugmode)
+		std::cout<<"time string: "<<timestring<<std::endl;
+	logfile.open(filename,std::ios::out | std::ios::app);
+	logfile<<timestring<<std::endl;
+	logfile.close();
+
+}
+
 std::string GetMessage(std::string input){
 
 	std::string message=input.substr(input.find(message_delimiter)+(message_delimiter.length()));
