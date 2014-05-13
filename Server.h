@@ -51,7 +51,7 @@
 //#define PRINT_KEYS
 
 //HARDWARE DEPENDANT
-#define MAXINCOMINGCLIENTS 50
+//#define MAXINCOMINGCLIENTS 50
 #define BUFFERSIZE 256
 
 
@@ -74,6 +74,7 @@ extern std::string portflag="-p";
 extern std::string dbflag="-b";
 extern std::string outflag="-o";
 extern std::string initializeflag="-i";
+extern std::string threadflag="-t";
 
 extern std::string to_delimiter="TO:";
 extern std::string from_delimiter="FROM:";

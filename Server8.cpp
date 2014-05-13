@@ -69,7 +69,9 @@ bool portspecified=false;
 bool dbspecified=false;
 bool outfilespecified=false;
 bool initializedatabase=false;
+bool threadsspecified=false;
 
+int max_threads=30;
 
 messagetype ParseData(std::string input){
 
@@ -496,9 +498,14 @@ int main(int argc, char * argv[]){
 			outfilespecified=true;
 			outfile = argv[i+1];
 		}
-
+		if(argv[i]==threadflag){
+			threadsspecified=true;
+			max_threads= atoi(argv[i+1]);
+		}
 
 	}
+
+
 	if(outfilespecified){
 		std::cout<<"outfile: "<<outfile<<std::endl;
 	}
@@ -572,7 +579,7 @@ int main(int argc, char * argv[]){
 	//Listen for incoming connections
 	if(debugmode)
 		std::cout<<"listening on port"<<std::endl;
-	if(listen(server_socket, MAXINCOMINGCLIENTS)<0){
+	if(listen(server_socket, max_threads)<0){
 		std::cerr<<"failed to listen for connections"<<std::endl;
 		exit (-1);
 	}
