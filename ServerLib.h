@@ -17,7 +17,7 @@ std::string GetUserPassword(std::string input);
 
 std::string GetUserName(std::string input);
 
-void SendMessage(std::string sender, std::string receiver, std::string message);
+bool SendMessage(std::string sender, std::string receiver, std::string message);
 
 void LogUserOff(std::string username);
 

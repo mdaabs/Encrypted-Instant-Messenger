@@ -11,27 +11,37 @@
  *
  *	Runtime Instructions: ./Server <Host Port>
  *
- *	LOGIN=username
+ *	LOGIN=username*PASS:password
+ *	LOGOFF=username
  *	SENDMESSAGE=TO:theirname*MESSAGE:message
+ *	ADDUSER=username*PASS:password
  *
  *
  *	To Do:
- *	database bugs
- *	Change Password
- *	Fix validation
+ *	sql mutex
+ *	Change Password 
+ *
  *	RSA
+ *	log file
  *	 
- *	safe/clean exits (handle client drop) (turn reads into if statements that handle disconnects)
+ *	safe/clean exits (handle client drop) (turn reads into if statements that handle disconnects) / daemonkill
  *	
- *
- *	can use pthread_detach(pthread_self()) at user logoff to detach thread
- *	and/or can use pthread_exit()
- *
- *	close(clientSocket); upon logoff request
  *
  *
  *	BUG LIST:
  *	everything
+ *
+ *
+ *	FLAGS:
+ *	mandatory:
+ *	-p portnumber	
+ *	-b database
+ *	optional:
+ *	-d debug
+ *	-D daemonize
+ *	-o logfile (uninmplemented)
+ *
+ *
  *	
  *	
  */
@@ -83,7 +93,7 @@ messagetype ParseData(std::string input){
 
 }
 
-	
+
 void *ThreadMain(void *clsk){
 	pthread_detach(pthread_self());
 
@@ -97,11 +107,11 @@ void *ThreadMain(void *clsk){
 
 	Encryption cryptobject;	
 
-//	key=cryptobject.printKey();
-//	iv=cryptobject.printIV();
-//	key_iv=FormatKeyIV(key, iv);
+	//	key=cryptobject.printKey();
+	//	iv=cryptobject.printIV();
+	//	key_iv=FormatKeyIV(key, iv);
 
-/*	if(debugmode){
+	/*	if(debugmode){
 		std::cout<<"Key generated as: "<<std::endl;
 		std::cout<<key<<std::endl;
 		std::cout<<"IV generated as: "<<std::endl;
@@ -175,10 +185,10 @@ void *ThreadMain(void *clsk){
 			key_iv=FormatKeyIV(key, iv);
 
 			if(debugmode){
-			std::cout<<"Key generated as: "<<std::endl;
-			std::cout<<key<<std::endl;
-			std::cout<<"IV generated as: "<<std::endl;
-			std::cout<<iv<<std::endl;
+				std::cout<<"Key generated as: "<<std::endl;
+				std::cout<<key<<std::endl;
+				std::cout<<"IV generated as: "<<std::endl;
+				std::cout<<iv<<std::endl;
 
 			}
 
@@ -199,15 +209,15 @@ void *ThreadMain(void *clsk){
 					//loggedon=false;
 					listening=false;
 					pthread_exit(0);
-			}
-			SendMessage(username, username,key_iv);
+				}
+				SendMessage(username, username,key_iv);
 			}
 
 			break;
 
-			
+
 		case LOGOFF:
-		
+
 			if(!loggedon){
 				if(debugmode)
 					std::cout<<"user not logged in"<<std::endl;
@@ -217,34 +227,43 @@ void *ThreadMain(void *clsk){
 				//listening=false;
 				break;
 			}
-			
+
 			else{
-			LogUserOff(username);
-			close(client_socket);
-
-			listening=false;
-			pthread_exit(0);
-			break;
+				LogUserOff(username);
+				close(client_socket);
+				loggedon=false;
+				listening=false;
+				pthread_exit(0);
+				break;
 			}
-		/*had to encsapulate in brackets due to scoping limitations*/
+			/*had to encsapulate in brackets due to scoping limitations*/
 		case SENDMESSAGE:{
+			if(!loggedon){
+				if(debugmode)
+					std::cout<<"not logged on"<<std::endl;
+				SendMessage(username, username,f);
+				close(client_socket);
+				pthread_exit(0);
+				listening=false;
+				break;
 
+			}
 			receiver=GetMessageReceiver(input);
 			message=GetMessage(input);
 
-                       unsigned char* char_key=convertString(key);
+			unsigned char* char_key=convertString(key);
 
-                       unsigned char* char_iv=convertString(iv);
+			unsigned char* char_iv=convertString(iv);
 
-                        unsigned char *decrypt = NULL;
-                        unsigned char *encmsg = NULL;
-                    //   Encryption crypto;
+			unsigned char *decrypt = NULL;
+			unsigned char *encmsg = NULL;
+			//   Encryption crypto;
 
-                       cryptobject.DecryptAes(( unsigned char*)message.c_str(), message.size() + 1, &decrypt, ( unsigned char*)char_key, ( unsigned char*)char_iv);
+			cryptobject.DecryptAes(( unsigned char*)message.c_str(), message.size() + 1, &decrypt, ( unsigned char*)char_key, ( unsigned char*)char_iv);
 
-                      	if(debugmode)
-                       		std::cout<<"decrypt: "<<(const char *) decrypt<<"\n";
-			
+			if(debugmode)
+				std::cout<<"decrypt: "<<(const char *) decrypt<<"\n";
+
 			message=(const char *) decrypt;
 
 			std::string recv_key=GetReceiversKey(receiver);
@@ -253,18 +272,23 @@ void *ThreadMain(void *clsk){
 			unsigned char* char_recv_key=convertString(recv_key);
 			unsigned char* char_recv_iv=convertString(recv_iv);
 
-                        cryptobject.EncryptAes((const unsigned char*)message.c_str(), message.size() + 1, &encmsg, ( unsigned char*)char_recv_key, ( unsigned char*)char_recv_iv);
+			cryptobject.EncryptAes((const unsigned char*)message.c_str(), message.size() + 1, &encmsg, ( unsigned char*)char_recv_key, ( unsigned char*)char_recv_iv);
 
-                      	if(debugmode)
+			if(debugmode)
 				std::cout<<"encrypt: "<<(const char *) encmsg<<"\n";
 
-                        message=(const char *) encmsg;
+			message=(const char *) encmsg;
 
-            message=FormatOutGoingMessage(username, message);
-            SendMessage(username, receiver,message);
+			message=FormatOutGoingMessage(username, message);
+			bool found_receiver=SendMessage(username, receiver,message);
+			if(!found_receiver){
+				if(debugmode)
+					std::cout<<"couldn't find: "<<receiver<<std::endl;
+				SendMessage(username, username,f);
 
-            break;
 			}
+			break;
+		}
 
 		case ADDUSER:
 
@@ -274,14 +298,14 @@ void *ThreadMain(void *clsk){
 				bool user_exists=IsUserInDatabase(username);
 				if(user_exists){
 					if(debugmode)
-					std::cout<<"user: "<<username<<"username taken"<<std::endl;
+						std::cout<<"user: "<<username<<"username taken"<<std::endl;
 					SendMessage(username, username,f);
 					pthread_exit(0);
 
 				}
 			}
 			salt=generateSalt();
-	//		password=generateHash(salt, password);
+			//		password=generateHash(salt, password);
 			if (debugmode)
 				std::cout<<"salt generated: "<<salt<<std::endl;
 			AddUserToDatabase(username, password, salt);
@@ -292,7 +316,7 @@ void *ThreadMain(void *clsk){
 		case CHANGEPASSWORD:
 
 			IsUserInDatabase(username);
-			
+
 			break;
 
 		case INVALID:
@@ -301,11 +325,11 @@ void *ThreadMain(void *clsk){
 			break;
 		default:
 			break;
-		
+
 
 		}
 
-	
+
 	}	
 	//zombie_threads++;
 	pthread_exit(0);
@@ -330,7 +354,7 @@ int main(int argc, char * argv[]){
 
 	pid_t pid;
 	signal(SIGINT,signal_callback_handler);
-//if (typeid(a) == typeid(int()))
+	//if (typeid(a) == typeid(int()))
 	int i=1;
 	for(i=1;i<argc;i++){
 		if(argv[i]==daemonflag){
@@ -361,7 +385,7 @@ int main(int argc, char * argv[]){
 	}
 	if(!portspecified){
 		std::cerr<<"no port specified"<<std::endl;
-    		exit(-1);
+		exit(-1);
 	}
 
 	if(daemonize&&debugmode){
@@ -374,10 +398,10 @@ int main(int argc, char * argv[]){
 		std::cout<<"Hosting on port: "<<server_port<<std::endl;
 
 
-   	if((server_port > 65535) || (server_port < 2000)){
-      		std::cerr << "Please enter a port number between 2000 - 65535" << std::endl;
-    		exit(-1);
-   	}
+	if((server_port > 65535) || (server_port < 2000)){
+		std::cerr << "Please enter a port number between 2000 - 65535" << std::endl;
+		exit(-1);
+	}
 
 	//create socket
 
@@ -400,15 +424,15 @@ int main(int argc, char * argv[]){
 	if(debugmode)
 		std::cout<<"Binding socket to port"<<std::endl;
 	if(bind(server_socket, (struct sockaddr*) &server_address, sizeof(server_address))<0){
-        	std::cerr << "Cannot bind to socket" << std::endl;
-       		exit (-1);
-    	}
+		std::cerr << "Cannot bind to socket" << std::endl;
+		exit (-1);
+	}
 	//Listen for incoming connections
 	if(debugmode)
 		std::cout<<"listening on port"<<std::endl;
 	if(listen(server_socket, MAXINCOMINGCLIENTS)<0){
 		std::cerr<<"failed to listen for connections"<<std::endl;
-       		exit (-1);
+		exit (-1);
 	}
 
 
@@ -421,7 +445,7 @@ int main(int argc, char * argv[]){
 			exit(0);
 		}
 	}
-		
+
 	//Loops for clients, then threads off
 	while(!finished){
 		client_socket=accept(server_socket, (struct sockaddr *) &client_address, &address_length);
@@ -433,6 +457,6 @@ int main(int argc, char * argv[]){
 
 	endprocess();
 
-return 0;
+	return 0;
 }
 

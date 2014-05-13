@@ -79,7 +79,7 @@ std::string GetUserName(std::string input){
 
 //need to error handle
 
-void SendMessage(std::string sender, std::string receiver, std::string message){
+bool SendMessage(std::string sender, std::string receiver, std::string message){
 	if(debugmode)
 		std::cout<<"about to try message sending"<<std::endl;
 	try{	
@@ -89,10 +89,12 @@ void SendMessage(std::string sender, std::string receiver, std::string message){
 		write(*receiver_socket, message.c_str(), message.size());
 		if(debugmode)
 			std::cout<<"sent"<<std::endl;
+	return true;
 	}
 	catch (std::exception e){
 		if(debugmode)
 			std::cout<<"error occured on lookup"<<std::endl;
+	return false;
 	}
 }
 

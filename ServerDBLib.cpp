@@ -15,9 +15,11 @@ std::string GetUserSalt(std::string username)
    rc = sqlite3_open(database, &db);
 
     if( rc ){
+	if(debugmode)
       fprintf(stderr, "Can't open database: %s\n", sqlite3_errmsg(db));
       exit(0);
    }else{
+	if(debugmode)
       fprintf(stderr, "Opened database successfully\n");
    }
 
@@ -42,6 +44,7 @@ std::string GetUserSalt(std::string username)
   }
   else
   {
+	if(debugmode)
     fprintf(stdout, "SOmthing went wrong");
   }
   std::string salt((char *) text);//=((reinterpret_cast<char*>(text));
