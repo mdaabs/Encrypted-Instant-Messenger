@@ -9,5 +9,6 @@ bool AddUserToDatabase(std::string username, std::string password, std::string s
 
 bool ValidateUserInDatabase(std::string username, std::string password);
 
+std::string GetUserSalt(std::string username);
 
 #endif

@@ -1,64 +1,52 @@
 //#include "Server.h"
 #include "ServerDBLib.h"
 
-bool GetUserSalt(std::string username){
-sqlite3 *db;
+std::string GetUserSalt(std::string username)
+{
+  sqlite3 *db;
    sqlite3_stmt * stmt;
    char *zErrMsg = 0;
    int rc;
-   std::string sql;
+   std::string sql, hashedpassword;
    int nbyte;
    int thestep;
-	
+   const unsigned char * text;
+
    rc = sqlite3_open(database, &db);
 
     if( rc ){
-	if(debugmode)
       fprintf(stderr, "Can't open database: %s\n", sqlite3_errmsg(db));
       exit(0);
-      return false;
    }else{
-	if(debugmode)
       fprintf(stderr, "Opened database successfully\n");
    }
 
-  sql = "SELECT salt FROM USERS WHERE USER_NAME == '" + username +"';";
+   sql = "SELECT SALT FROM USERS WHERE USER_NAME == '" + username + "';";
 
-  nbyte = sql.length() + 1;
+    nbyte = sql.length() + 1;
 
   sqlite3_prepare(db, sql.c_str(), nbyte, &stmt, NULL);
-     
-     thestep = sqlite3_step( stmt );
 
-    if( thestep != SQLITE_ROW)
-     {
-	if(debugmode)
-      fprintf(stdout, "Step failed I repeat step failed\n");
-      sqlite3_close(db);
-      return false;
-     }
-     else
-     {
-	if(debugmode)
-       printf("%s", "its in there");
-     }
+  thestep = sqlite3_step( stmt );
 
-    if( rc != SQLITE_OK ){
-	if(debugmode)
-         fprintf(stderr, "SQL error: %s\n", zErrMsg);
-         sqlite3_free(zErrMsg);
-         sqlite3_close(db);
-         return false;
-      }else{
-	if(debugmode)
-         fprintf(stdout, "user found in database successfully\n");
-       }
-	
-    sqlite3_finalize(stmt);
+  if (thestep == SQLITE_ROW)
+  {
+    text = sqlite3_column_text (stmt, 0);
+    //hashedpassword = text;
+    //printf("%s", text);
+    /* text = sqlite3_column_text (stmt, 1);
+     printf("%s", text);
+     text = sqlite3_column_text (stmt, 2);
+     printf("%s", text);
+     printf("%s", "we got a row!");*/
+  }
+  else
+  {
+    fprintf(stdout, "SOmthing went wrong");
+  }
+  std::string salt((char *) text);//=((reinterpret_cast<char*>(text));
+  return salt;
 
-   sqlite3_close(db);
-
-  return thestep;
 }
 
 bool IsUserInDatabase(std::string username){

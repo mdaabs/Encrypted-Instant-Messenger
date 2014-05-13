@@ -4,7 +4,7 @@
  *	#2scoopz
  *
  *	Compile Instructions: Standard g++
- *	g++ Server8.cpp Encryption.cpp -std=gnu++0x -lpthread -Wall -Wextra -w -lcrypto -ldl -o Server8
+ *	g++ Server8.cpp Encryption.cpp -std=gnu++0x -lpthread -Wall -Wextra -w -lsqlite3 -lcrypto -ldl -o Server8
  *
  *
  *
@@ -140,11 +140,24 @@ void *ThreadMain(void *clsk){
 
 		switch(action){
 		case LOGIN:
-			
+			if(loggedon){
+				if(debugmode)
+					std::cout<<"user already logged in"<<std::endl;
+				SendMessage(username, username,f);
+				close(client_socket);
+				pthread_exit(0);
+				listening=false;
+				break;
+			}
 
 			username=GetUserName(input);
 			password=GetUserPassword(input);
 			salt=GetUserSalt(username);
+			if(debugmode)
+				std::cout<<"salt returned as: "<<salt<<std::endl;
+			password=generateHash(salt, password);
+			if(debugmode)
+				std::cout<<"hashed pass: "<<password<<std::endl;
 			loggedon=ValidateUserInDatabase(username, password);
 			if(!loggedon){
 				if(debugmode)
@@ -173,7 +186,12 @@ void *ThreadMain(void *clsk){
 			StoreUserKeyIV(username, key_iv);
 			SendMessage(username, username,t);
 			memset(buffer,0,BUFFERSIZE);
-			read(client_socket, buffer, BUFFERSIZE);
+			if(read(client_socket, buffer, BUFFERSIZE)<0){
+				if(debugmode)
+					std::cout<<"client dropped"<<std::endl;
+				close(client_socket);
+				pthread_exit(0);
+			}
 			{
 				std:: string credreq (buffer);
 				if(!(credreq.compare("CREDREQ")==0)){
@@ -190,16 +208,24 @@ void *ThreadMain(void *clsk){
 			
 		case LOGOFF:
 		
+			if(!loggedon){
+				if(debugmode)
+					std::cout<<"user not logged in"<<std::endl;
+				SendMessage(username, username,f);
+				//close(client_socket);
+				//pthread_exit(0);
+				//listening=false;
+				break;
+			}
 			
-
+			else{
 			LogUserOff(username);
-	
-
 			close(client_socket);
 
 			listening=false;
 			pthread_exit(0);
 			break;
+			}
 		/*had to encsapulate in brackets due to scoping limitations*/
 		case SENDMESSAGE:{
 
@@ -244,14 +270,16 @@ void *ThreadMain(void *clsk){
 
 			username=GetUserName(input);
 			password=GetUserPassword(input);
-			if(IsUserInDatabase(username)){
-				if(debugmode)
-				std::cout<<"user: "<<username<<"username taken"<<std::endl;
-				SendMessage(username, username,f);
-				pthread_exit(0);
+			{
+				bool user_exists=IsUserInDatabase(username);
+				if(user_exists){
+					if(debugmode)
+					std::cout<<"user: "<<username<<"username taken"<<std::endl;
+					SendMessage(username, username,f);
+					pthread_exit(0);
 
+				}
 			}
-
 			salt=generateSalt();
 	//		password=generateHash(salt, password);
 			if (debugmode)
