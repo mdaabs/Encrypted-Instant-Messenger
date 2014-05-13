@@ -241,13 +241,15 @@ bool UpdatePassword(std::string username, std::string newPassWord)
    std::string sql;
    int nbyte;
 
-   rc = sqlite3_open("CryptChat.db", &db);
+   rc = sqlite3_open(database, &db);
 
     if( rc ){
+	if(debugmode)
       fprintf(stderr, "Can't open database: %s\n", sqlite3_errmsg(db));
       exit(0);
       return false;
    }else{
+	if(debugmode)
       fprintf(stderr, "Opened database successfully\n");
    }
 
@@ -261,17 +263,20 @@ nbyte = sql.length() + 1;
      
      if( sqlite3_step( stmt ) != SQLITE_DONE)
      {
+	if(debugmode)
       fprintf(stdout, "Step failed I repeat step failed2\n");
       sqlite3_close(db);
       return false;
      }
 
     if( rc != SQLITE_OK ){
+	if(debugmode)
          fprintf(stderr, "SQL error: %s\n", zErrMsg);
          sqlite3_free(zErrMsg);
          sqlite3_close(db);
          return false;
       }else{
+	if(debugmode)
          fprintf(stdout, "Records created successfully\n");
        }
     sqlite3_finalize(stmt);
@@ -282,4 +287,63 @@ return true;
 }
 
 
+bool InitializeDatabase(){
 
+
+  sqlite3 *db;
+   sqlite3_stmt * stmt;
+   char *zErrMsg = 0;
+   int rc;
+   std::string sql, hashedpassword;
+   int nbyte;
+   int thestep;
+	//const char * dbspec=dbname.c_str();
+   rc = sqlite3_open(database, &db);
+
+    if( rc ){
+	if(debugmode)
+      fprintf(stderr, "Can't open database: %s\n", sqlite3_errmsg(db));
+      exit(0);
+      return false;
+   }else{
+	if(debugmode)
+      fprintf(stderr, "Opened database successfully\n");
+   }
+	std::string dbname (database);
+  sql = "CREATE TABLE "+ dbname +"(USER_NAME CHAR(120) PRIMARY KEY NOT NULL, PASSWORD_HASH CHAR(120) NOT NULL, SALT CHAR(120) NOT NULL);";
+
+  nbyte = sql.length() + 1;
+
+  sqlite3_prepare(db, sql.c_str(), nbyte, &stmt, NULL);
+     
+     thestep = sqlite3_step( stmt );
+
+     if( thestep != SQLITE_ROW)
+     {
+	if(debugmode)
+      fprintf(stdout, "Step failed I repeat step failedz\n");
+      sqlite3_close(db);
+      return false;
+     }
+     else
+     {
+	if(debugmode)
+       printf("%s", "its in there");
+     }
+
+    if( rc != SQLITE_OK ){
+	if(debugmode)
+         fprintf(stderr, "SQL error: %s\n", zErrMsg);
+         sqlite3_free(zErrMsg);
+         sqlite3_close(db);
+         return false;
+      }else{
+	if(debugmode)
+         fprintf(stdout, "user found in database successfully\n");
+       }
+    sqlite3_finalize(stmt);
+
+   sqlite3_close(db);
+
+  return true;
+}

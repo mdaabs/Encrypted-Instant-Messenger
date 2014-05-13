@@ -13,4 +13,6 @@ std::string GetUserSalt(std::string username);
 
 bool UpdatePassword(std::string username, std::string newPassWord);
 
+bool InitializeDatabase();
+
 #endif

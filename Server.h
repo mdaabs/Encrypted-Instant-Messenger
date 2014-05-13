@@ -71,6 +71,7 @@ extern std::string debugflag="-d";
 extern std::string portflag="-p";
 extern std::string dbflag="-b";
 extern std::string outflag="-o";
+extern std::string initializeflag="-i";
 
 extern std::string to_delimiter="TO:";
 extern std::string from_delimiter="FROM:";

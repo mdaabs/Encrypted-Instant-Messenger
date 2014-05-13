@@ -15,7 +15,7 @@
  *	LOGOFF=username
  *	SENDMESSAGE=TO:theirname*MESSAGE:message
  *	ADDUSER=username*PASS:password
- *
+ *	CHANGEPASSWORD=username*PASS:password*NEWPASS:newpassword
  *
  *	To Do:
  *	sql mutex
@@ -63,7 +63,7 @@ bool debugmode=false;
 bool portspecified=false;
 bool dbspecified=false;
 bool outfilespecified=false;
-
+bool initializedatabase=false;
 
 
 messagetype ParseData(std::string input){
@@ -305,7 +305,9 @@ void *ThreadMain(void *clsk){
 				if(user_exists){
 					if(debugmode)
 						std::cout<<"user: "<<username<<"username taken"<<std::endl;
-					SendMessage(username, username,f);
+						std::string error=f;
+						write(client_socket, f.c_str(), f.size());
+					//SendMessage(username, username,f);
 					pthread_exit(0);
 
 				}
@@ -330,7 +332,7 @@ void *ThreadMain(void *clsk){
 			if(!validated){
 				if(debugmode)
 					std::cout<<"invalid credentials"<<std::endl;
-				SendMessage(username, username,f);
+				write(client_socket, f.c_str(), f.size());
 				close(client_socket);
 				pthread_exit(0);
 
@@ -394,12 +396,34 @@ int main(int argc, char * argv[]){
 			dbspecified=true;
 			database = argv[i+1];
 		}
+		if(argv[i]==initializeflag){
+			initializedatabase=true;
+			database = argv[i+1];
+		}
 		if(argv[i]==outflag){
 			outfilespecified=true;
 			outfile = atoi(argv[i+1]);
 		}
 
 
+	}
+
+	if(initializedatabase&&(daemonize||portspecified||dbspecified)){
+		std::cerr<<"Can't initialize database with these flags set"<<std::endl;
+		exit(-1);
+	}
+
+	
+	if(initializedatabase){
+	bool init=InitializeDatabase();
+	if(init){
+		std::cout<<"Database initialized"<<std::endl;
+		exit(0);
+	}
+	else{
+		std::cerr<<"Failed to initialize database"<<std::endl;
+		exit(-1);
+	}
 	}
 
 	if(!dbspecified){
