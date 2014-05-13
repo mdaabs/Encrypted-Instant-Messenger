@@ -3,6 +3,7 @@
 
 
 allUsers user;
+
 //setter for user
 void allUsers::setusername(string x){
     user.username=x;
@@ -22,12 +23,14 @@ void allUsers::setport(string p){
 void allUsers::setsocket(int* s){
     user.socket=s;
 }
-void allUsers::setsalt(char * salt){
-    user.salt=salt;
+void allUsers::setiv(string iv){
+    user.iv=iv;
 }
 void allUsers::setkey(string key){
     user.key=key;
 }
+
+
 
 
 //getter
@@ -49,9 +52,13 @@ string allUsers::getport(){
 int* allUsers::getsocket(){
     return user.socket;
 }
-char* allUsers::getsalt(){
-   return user.salt;
+string allUsers::getiv(){
+   return user.iv;
 }
 string allUsers::getkey(){
     return user.key;
 }
+//sendToClient allUsers::getclient(){
+//    return user.clientInfo;
+
+//}

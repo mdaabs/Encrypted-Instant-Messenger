@@ -1,12 +1,25 @@
   #include "sendtoencrypt.h"
 
 
-string sendToEncrypt::encryptMessage(string pass, char* key){
+string sendToEncrypt::encryptMessage(string pass, char* key, char*iv){
 
-    string encmsg;
+     unsigned char *encmsg = NULL;
+
+    Encryption crypto;
+    crypto.EncryptAes((const unsigned char*)pass.c_str(), pass.size() + 1, &encmsg, ( unsigned char*)key, ( unsigned char*)iv);
 
 
-    return encmsg;
+    return (const char *) encmsg;
+}
+string sendToEncrypt::decryptMessage(string pass, char* key, char*iv){
+
+     unsigned char *decrypt = NULL;
+
+    Encryption crypto;
+    crypto.DecryptAes(( unsigned char*)pass.c_str(), pass.size() + 1, &decrypt, ( unsigned char*)key, ( unsigned char*)iv);
+
+
+    return (const char *) decrypt;
 }
 string sendToEncrypt::getSalt(){
     string salt;

@@ -3,6 +3,8 @@
 #include <iostream>
 #include <string>
 #include <fstream>
+//#include <sendtoclient.h>
+#include <QtNetwork>
 using namespace std;
 
 //creates a user class with the users variables
@@ -19,8 +21,10 @@ public:
     string ip;
     string port;
     int*socket;
-    char* salt;
+    string iv;
     string key;
+
+//    sendToClient clientInfo;
 
 
     void setusername(string);
@@ -29,8 +33,9 @@ public:
     void setip(string);
     void setport(string);
     void setsocket(int*);
-    void setsalt(char *);
+    void setiv(string iv);
     void setkey(string key);
+  //  void setclient(sendToClient c);
 
     string getusername();
     string getpassword();
@@ -38,8 +43,9 @@ public:
     string getip();
     string getport();
     int* getsocket();
-    char* getsalt();
+    string getiv();
     string getkey();
+  //  sendToClient getclient();
 
 };
 

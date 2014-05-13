@@ -1,10 +1,10 @@
+#include <stdio.h>
+#include <sstream>
+#include <iostream>
+#include <fstream>
+#include <string>
+#include <iomanip>
 #include "Encryption.h"
-#include <openssl/evp.h>
-#include <openssl/pem.h>
-#include <openssl/aes.h>
-#include <openssl/err.h>
-#include <openssl/rand.h>
-#include "openssl/evp.h"
 
 EVP_PKEY* Encryption::localKeyPair;
 
@@ -12,18 +12,6 @@ Encryption::Encryption() {
     localKeyPair = NULL;
     remotePubKey = NULL;
 
-    #ifdef PSUEDO_CLIENT
-        genTestClientKey();
-    #endif
-
-    init();
-}
-
-Encryption::Encryption(unsigned char *remotePubKey, size_t remotePubKeyLen) {
-    localKeyPair = NULL;
-    this->remotePubKey = NULL;
-
-    setRemotePubKey(remotePubKey, remotePubKeyLen);
     init();
 }
 
@@ -46,7 +34,7 @@ Encryption::~Encryption() {
     free(aesIV);
 }
 
-int Encryption::EncryptAes(const unsigned char *msg, size_t msgLen, unsigned char **encMsg) {
+int Encryption::EncryptAes(const unsigned char *msg, size_t msgLen, unsigned char **encMsg, unsigned char *aesKey, unsigned char *aesIV) {
     size_t blockLen = 0;
     size_t encMsgLen = 0;
 
@@ -76,7 +64,7 @@ int Encryption::EncryptAes(const unsigned char *msg, size_t msgLen, unsigned cha
     return encMsgLen + blockLen;
 }
 
-int Encryption::DecryptAes(unsigned char *encMsg, size_t encMsgLen, unsigned char **decMsg) {
+int Encryption::DecryptAes(unsigned char *encMsg, size_t encMsgLen, unsigned char **decMsg, unsigned char *aesKey, unsigned char *aesIV) {
     size_t decLen = 0;
     size_t blockLen = 0;
 
@@ -117,7 +105,7 @@ int Encryption::init() {
     DecryptAesCtx = (EVP_CIPHER_CTX*)malloc(sizeof(EVP_CIPHER_CTX));
 
     // malloc check
-    if (/* EncryptRsaCtx == NULL  || */ EncryptAesCtx == NULL || /* DecryptRsaCtx == NULL  || */ DecryptAesCtx == NULL) {
+    if (EncryptAesCtx == NULL || DecryptAesCtx == NULL) {
         return -1;
     }
 
@@ -127,21 +115,6 @@ int Encryption::init() {
 
         // EVP_CIPHER_CTX_init(DecryptRsaCtx);
         EVP_CIPHER_CTX_init(DecryptAesCtx);
-
-    //init RSA
-    /* EVP_PKEY_CTX *ctx = EVP_PKEY_CTX_new_id(EVP_PKEY_RSA, NULL);  // create pkey algorithm context for RSA
-
-    if(EVP_PKEY_keygen_init(ctx) <= 0) { // initialize the keygen
-        return FAILURE;
-    }
-
-    if(EVP_PKEY_CTX_set_rsa_keygen_bits(ctx, RSA_KEYLEN) <= 0) { // set length of key
-        return FAILURE;
-    }
-
-    if(EVP_PKEY_keygen(ctx, &localKeyPair) <= 0) { // generate key
-        return FAILURE
-    } */
 
     // free context
     //EVP_PKEY_CTX_free(ctx);
@@ -193,24 +166,6 @@ int Encryption::init() {
 
 int Encryption::writeKeyToFile(FILE *fd, int key) {
     switch(key) {
-        // write private key in PEM format (certificate)
-        case KEY_SERVER_PRIVATE:
-            if (!PEM_write_PrivateKey(fd, localKeyPair, NULL, NULL, 0, 0, NULL)) {
-                return -1;
-            }
-            break;
-        // write public key for server in PEM format
-        case KEY_SERVER_PUB:
-            if (!PEM_write_PUBKEY(fd, localKeyPair)) {
-                return -1;
-            }
-            break;
-        // write public key for client in PEM format
-        case KEY_CLIENT_PUB:
-            if (!PEM_write_PUBKEY(fd, remotePubKey)) {
-                return -1;
-            }
-            break;
         // write the aes key to file
         case KEY_AES:
             fwrite(aesKey, 1, AES_KEYLEN, fd);
@@ -219,103 +174,10 @@ int Encryption::writeKeyToFile(FILE *fd, int key) {
         case KEY_AES_IV:
             fwrite(aesIV, 1, AES_KEYLEN, fd);
             break;
-
         default:
             return -1;
     }
     return 0;
-}
-
-int Encryption::getRemotePubKey(unsigned char **pubKey)	{
-
-    // BIO is and I/O abstraction in openssl
-    // PEM files contain certificates in them
-    BIO *bio = BIO_new(BIO_s_mem());
-    PEM_write_bio_PUBKEY(bio, remotePubKey);
-
-    // BIO_pending is number of pending characters
-    // in the read/write of BIO
-    int pubKeyLen = BIO_pending(bio);
-    *pubKey = (unsigned char*)malloc(pubKeyLen);
-    if (pubKey == NULL) {
-        return -1;
-    }
-
-    // reads len from bio into buffer
-    BIO_read(bio, *pubKey, pubKeyLen);
-
-    // makes last array member nul terminator
-    (*pubKey)[pubKeyLen - 1] = '\0';
-
-    // freebird
-    BIO_free_all(bio);
-
-    return pubKeyLen;
-}
-
-int Encryption::setRemotePubKey(unsigned char* pubKey, size_t pubKeyLen) {
-
-    BIO *bio = BIO_new(BIO_s_mem());
-
-    // check if the content written is the same
-    // length as the pubkey; ensure proper len
-    if (BIO_write(bio, pubKey, pubKeyLen) != (int)pubKeyLen) {
-        return -1;
-    }
-
-    RSA *_pubKey = (RSA*)malloc(sizeof(RSA));
-    if (_pubKey == NULL) {
-        return -1;
-    }
-
-    // read the pubkey
-    PEM_read_bio_PUBKEY(bio, &remotePubKey, NULL, NULL);
-
-    BIO_free_all(bio);
-
-    return 0;
-}
-
-// same as getRemotePubKey
-int Encryption::getLocalPubKey(unsigned char** pubKey) {
-
-    BIO *bio = BIO_new(BIO_s_mem());
-    PEM_write_bio_PUBKEY(bio, localKeyPair);
-
-
-    int pubKeyLen = BIO_pending(bio);
-    *pubKey = (unsigned char*)malloc(pubKeyLen);
-    if (pubKey == NULL) {
-        return -1;
-    }
-
-    BIO_read(bio, *pubKey, pubKeyLen);
-
-    (*pubKey)[pubKeyLen - 1] = '\0';
-
-    BIO_free_all(bio);
-
-    return pubKeyLen;
-}
-
-int Encryption::getLocalPrivateKey(unsigned char **privateKey) {
-    BIO *bio = BIO_new(BIO_s_mem());
-
-    PEM_write_bio_PrivateKey(bio, localKeyPair, NULL, NULL, 0, 0, NULL);
-
-    int privateKeyLen = BIO_pending(bio);
-    *privateKey = (unsigned char*)malloc(privateKeyLen + 1);
-    if (privateKey == NULL) {
-        return -1;
-    }
-
-    BIO_read(bio, *privateKey, privateKeyLen);
-
-    (*privateKey)[privateKeyLen] = '\0';
-
-    BIO_free_all(bio);
-
-    return privateKeyLen;
 }
 
 int Encryption::getAesKey(unsigned char **aesKey) {
@@ -348,23 +210,26 @@ int Encryption::setAesIV(unsigned char *aesIV, size_t aesIVLen) {
     return 0;
 }
 
-int Encryption::genTestClientKey() {
+// returns key as string to send to db, don't confuse with
+// getAesKey which is used for key length
+std::string Encryption::printKey() {
+  size_t aesLength = getAesKey(&aesKey);
+  //printf("AES Key: ");
+  std::stringstream s;
+  for (unsigned int i = 0; i < aesLength; i++) {
+    //printf("%x", aesKey[i]);
+    s << std::hex << std::setw(2) << std::setfill('0') << (int)aesKey[i];
+  }
 
-    EVP_PKEY_CTX *ctx = EVP_PKEY_CTX_new_id(EVP_PKEY_RSA, NULL);
+  return s.str();
+}
 
-    if (EVP_PKEY_keygen_init(ctx) <= 0) {
-        return -1;
-    }
+std::string Encryption::printIV() {
+  size_t IVlength = getAesIV(&aesIV);
+  std::stringstream s;
+  for (unsigned int i = 0; i < IVlength; i++) {
+    s << std::hex << std::setw(2) << std::setfill('0') << (int)aesIV[i];
+  }
 
-    if (EVP_PKEY_CTX_set_rsa_keygen_bits(ctx, RSA_KEYLEN) <= 0) {
-        return -1;
-    }
-
-    if (EVP_PKEY_keygen(ctx, &remotePubKey) <= 0) {
-        return -1;
-    }
-
-    EVP_PKEY_CTX_free(ctx);
-
-    return 0;
+  return s.str();
 }

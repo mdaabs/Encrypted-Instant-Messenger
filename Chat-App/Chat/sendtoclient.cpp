@@ -1,17 +1,14 @@
 #include "sendtoclient.h"
 #include "client.h"
-sendToClient::sendToClient(){};
+#include <QTcpServer>
+sendToClient::sendToClient(){
+}
 
-int* sendToClient::connect(string ip,string port){
-//    string serverIP="10.0.2.15";
-//   unsigned short testport=5432;
+int* sendToClient::connectto(string ip,string port){
+
     int *j;
     int* connected;
 
-    //int temp=atoi(port.c_str());
-
-    //unsigned short intport= (unsigned short)(*port.c_str());
-//    if(testport == port ){
 
     j=thisClient.ConnectClient(ip ,port);
         connected=j;
@@ -33,11 +30,27 @@ void sendToClient::storesalt(string salt, string username){
 
 
 }
-void sendToClient::sendmsg(string msg, int* sock){
+void sendToClient::sendlogin(string msg, int* sock){
+
 
     if(thisClient.SendMessage(msg, sock))
     ;
 
+}
+void sendToClient::sendmsg(string msg, int* sock){
+
+
+    if(thisClient.SendMessage(msg, sock))
+    ;
+
+}
+string sendToClient::receivemsg(int* socket){
+
+    string received="";
+
+      received=thisClient.receiveMessage(socket);
+
+    return received;
 }
 string sendToClient::getsalt(string username){
     string salt;
@@ -56,3 +69,4 @@ bool sendToClient::validpassword(string username, string password){
 
 
 }
+//sendToClient::~sendToClient(){}

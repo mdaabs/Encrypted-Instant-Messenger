@@ -1,7 +1,7 @@
 /********************************************************************************
 ** Form generated from reading UI file 'settings.ui'
 **
-** Created: Fri May 2 00:40:07 2014
+** Created: Tue May 13 03:48:00 2014
 **      by: Qt User Interface Compiler version 4.8.1
 **
 ** WARNING! All changes made in this file will be lost when recompiling UI file!
@@ -45,6 +45,11 @@ public:
         if (settings->objectName().isEmpty())
             settings->setObjectName(QString::fromUtf8("settings"));
         settings->resize(239, 264);
+        QSizePolicy sizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+        sizePolicy.setHorizontalStretch(0);
+        sizePolicy.setVerticalStretch(0);
+        sizePolicy.setHeightForWidth(settings->sizePolicy().hasHeightForWidth());
+        settings->setSizePolicy(sizePolicy);
         label_3 = new QLabel(settings);
         label_3->setObjectName(QString::fromUtf8("label_3"));
         label_3->setGeometry(QRect(90, 20, 141, 41));

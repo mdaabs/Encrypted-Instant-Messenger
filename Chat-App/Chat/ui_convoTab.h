@@ -1,7 +1,7 @@
 /********************************************************************************
 ** Form generated from reading UI file 'convoTab.ui'
 **
-** Created: Fri May 2 00:40:07 2014
+** Created: Tue May 13 03:48:00 2014
 **      by: Qt User Interface Compiler version 4.8.1
 **
 ** WARNING! All changes made in this file will be lost when recompiling UI file!
@@ -40,20 +40,34 @@ public:
         tabmessage = new QTextEdit(convoTab);
         tabmessage->setObjectName(QString::fromUtf8("tabmessage"));
         tabmessage->setGeometry(QRect(10, 280, 321, 111));
+        QSizePolicy sizePolicy(QSizePolicy::Fixed, QSizePolicy::Expanding);
+        sizePolicy.setHorizontalStretch(0);
+        sizePolicy.setVerticalStretch(0);
+        sizePolicy.setHeightForWidth(tabmessage->sizePolicy().hasHeightForWidth());
+        tabmessage->setSizePolicy(sizePolicy);
         tabmessage->setStyleSheet(QString::fromUtf8("background-color: rgb(255, 255, 255);\n"
 ""));
         fontComboBox = new QFontComboBox(convoTab);
         fontComboBox->setObjectName(QString::fromUtf8("fontComboBox"));
         fontComboBox->setGeometry(QRect(60, 230, 191, 24));
+        QSizePolicy sizePolicy1(QSizePolicy::Fixed, QSizePolicy::Fixed);
+        sizePolicy1.setHorizontalStretch(0);
+        sizePolicy1.setVerticalStretch(0);
+        sizePolicy1.setHeightForWidth(fontComboBox->sizePolicy().hasHeightForWidth());
+        fontComboBox->setSizePolicy(sizePolicy1);
         fontComboBox->setStyleSheet(QString::fromUtf8("background-color: rgb(255, 255, 255);"));
         tabconvo = new QListWidget(convoTab);
         tabconvo->setObjectName(QString::fromUtf8("tabconvo"));
         tabconvo->setGeometry(QRect(10, 10, 321, 201));
+        sizePolicy.setHeightForWidth(tabconvo->sizePolicy().hasHeightForWidth());
+        tabconvo->setSizePolicy(sizePolicy);
         tabconvo->setStyleSheet(QString::fromUtf8("background-color: rgb(255, 255, 255);\n"
 ""));
         tabsendbutton = new QPushButton(convoTab);
         tabsendbutton->setObjectName(QString::fromUtf8("tabsendbutton"));
         tabsendbutton->setGeometry(QRect(230, 400, 85, 27));
+        sizePolicy1.setHeightForWidth(tabsendbutton->sizePolicy().hasHeightForWidth());
+        tabsendbutton->setSizePolicy(sizePolicy1);
         tabsendbutton->setStyleSheet(QString::fromUtf8(""));
 
         retranslateUi(convoTab);

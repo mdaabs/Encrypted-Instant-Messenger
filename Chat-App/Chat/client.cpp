@@ -17,12 +17,16 @@ bool client::SendMessage(string message, int *socket){
 //    return name;
 
 //}
-string client::receiveMsg(int *socket){
-    string line;
-    //if(read(*socket, line, line.size())<0)
-        return line;
-
-
+string client::receiveMessage(int *socket) {
+    string mess;
+    char* messageBuf = new char[BUFSIZE];
+    if(read(*socket,messageBuf,BUFSIZE) < 0) {
+        cerr << "Failed to read login response" << endl;
+        exit(-1);
+    }
+    mess=string(messageBuf);
+    mess.append("hi");
+    return mess;
 }
 
 

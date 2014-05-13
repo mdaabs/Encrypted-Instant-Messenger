@@ -1,7 +1,7 @@
 /********************************************************************************
 ** Form generated from reading UI file 'tabdialog.ui'
 **
-** Created: Fri May 2 00:40:07 2014
+** Created: Tue May 13 03:48:00 2014
 **      by: Qt User Interface Compiler version 4.8.1
 **
 ** WARNING! All changes made in this file will be lost when recompiling UI file!
@@ -30,6 +30,11 @@ public:
         if (TabDialog->objectName().isEmpty())
             TabDialog->setObjectName(QString::fromUtf8("TabDialog"));
         TabDialog->resize(400, 300);
+        QSizePolicy sizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+        sizePolicy.setHorizontalStretch(0);
+        sizePolicy.setVerticalStretch(0);
+        sizePolicy.setHeightForWidth(TabDialog->sizePolicy().hasHeightForWidth());
+        TabDialog->setSizePolicy(sizePolicy);
         widget = new QWidget(TabDialog);
         widget->setObjectName(QString::fromUtf8("widget"));
         widget->setGeometry(QRect(20, 20, 331, 251));

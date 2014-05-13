@@ -18,8 +18,9 @@ struct thisuser
 
 };
 thisuser splitter(string x);
-QStringList getusers();
-QStringList getOffline();
+QStringList getusers(string username);
+QStringList getOffline(string username);
+void addtofriends(QString f, string username);
 
 
 #endif // USER_H

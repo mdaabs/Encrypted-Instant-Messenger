@@ -23,9 +23,20 @@ thisuser splitter(string line){
 
 
 }
+void addtofriends(QString f, string username){
+
+    QString current= QDir::currentPath();
+     string friendfile = current.toStdString();
+     friendfile.append("/"+username+".txt");
+
+    ofstream addtofile;
+    addtofile.open(friendfile.c_str(), ios::out | ios::app);
+    addtofile<<f.toStdString()<<"|t\n";
+    addtofile.close();
+}
 
 
-QStringList getusers(){
+QStringList getusers(string username){
 
     QStringList friends;
     int num=0;
@@ -37,17 +48,19 @@ QStringList getusers(){
     int countOn=0;
 
     string online[MAX];
-
-
+   QString current= QDir::currentPath();
+    string friendfile = current.toStdString();
+    friendfile.append("/"+username+".txt");
 
     ifstream userfile;
-    userfile.open("/home/george/Messenger/Chat/users.txt");
+    userfile.open(friendfile.c_str());
     if(userfile.is_open()){
 
         while(getline(userfile,line)){
+            if(line.length()>0){
             tempuser=splitter(line);
             allfriends[num]=tempuser;
-            num++;
+            num++;}
 
         }
     }
@@ -72,7 +85,7 @@ QStringList getusers(){
 
 
 }
-QStringList getOffline(){
+QStringList getOffline(string username){
 
     QStringList friends;
     int num=0;
@@ -85,10 +98,12 @@ QStringList getOffline(){
     int countOff=0;
 
      string offline[MAX];
+     QString current= QDir::currentPath();
+     string friendfile = current.toStdString();
+     friendfile.append("/"+username+".txt");
 
-
-    ifstream userfile;
-    userfile.open("/home/george/Messenger/Chat/users.txt");
+     ifstream userfile;
+     userfile.open(friendfile.c_str());
     if(userfile.is_open()){
 
         while(getline(userfile,line)){

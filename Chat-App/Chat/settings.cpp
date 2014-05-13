@@ -7,6 +7,8 @@ settings::settings(QWidget *parent) :
 {
 
     ui->setupUi(this);
+    setWindowTitle("Settings");
+
     this->connect(ui->save, SIGNAL(clicked()),this, SLOT(changed()));
   this->connect(ui->cancel, SIGNAL(clicked()),this, SLOT(cancel()));
 

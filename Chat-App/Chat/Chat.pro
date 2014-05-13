@@ -12,12 +12,14 @@ QT       -= gui
 
 QT      +=widgets
 QT       += gui
+QT +=  network
 
-
-TARGET = Chat
+TARGET = Crypt-Chat
+TARGET =../Chat-Executable/Crypt-Chat
 CONFIG   += console
 CONFIG   -= app_bundle
 CONFIG += static
+
 
 TEMPLATE = app
 LIBS += -LC:/usr/include/openssl-lubsec
@@ -38,7 +40,11 @@ SOURCES += \
     Encryption.cpp \
     b64.cpp \
     sendtoclient.cpp \
-    client.cpp
+    client.cpp \
+    mythread.cpp \
+    addnewfriend.cpp \
+    rectest.cpp \
+    changepassword.cpp
 
 
 HEADERS += \
@@ -54,7 +60,11 @@ HEADERS += \
     Encryption.h \
     b64.h \
     sendtoclient.h \
-    client.h
+    client.h \
+    mythread.h \
+    addnewfriend.h \
+    rectest.h \
+    changepassword.h
 
 FORMS += \
     mainwindow.ui \
@@ -62,14 +72,24 @@ FORMS += \
     convoTab.ui \
     login.ui \
     newuser.ui \
-    settings.ui
+    settings.ui \
+    addnewfriend.ui \
+    rectest.ui \
+    changepassword.ui
 
 OTHER_FILES += \
     users.txt \
     convo.txt \
     removed_functions.txt \
-    all.txt \
-    currentuserinfo.txt
+    currentuserinfo.txt \
+    allen.txt \
+    george.txt \
+    jon.txt \
+    mario.txt \
+    Demitri.txt \
+    Pomplun.txt
+
+RESOURCES +=
 
 
 

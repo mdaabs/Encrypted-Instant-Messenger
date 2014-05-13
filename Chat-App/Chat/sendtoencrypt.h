@@ -7,7 +7,8 @@ class sendToEncrypt
 {
 public:
     string hashPass(string pass, string salt);
-    string encryptMessage(string x, char* key);
+    string encryptMessage(string x, char* key, char*iv);
+    string decryptMessage(string x, char* key, char*iv);
     void sendMessagetoClient(string encrypted);
     void sendLogintoClient(string usrn, string passw);
     string getSalt();

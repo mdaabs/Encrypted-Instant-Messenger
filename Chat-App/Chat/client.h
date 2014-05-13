@@ -17,7 +17,8 @@
 #include <time.h>
 #include <vector>
 #include "tabdialog.h"
-
+#include "QObject"
+#define BUFSIZE 256
 using namespace std;
 
 
@@ -49,7 +50,10 @@ public:
     client();
      bool SendMessage(string message , int* socket);
     int* ConnectClient(string IP, string port);
-    string receiveMsg(int*socket);
+    string receiveMessage(int*socket);
+signals:
+    void receiving(string*);
+
 
 };
 

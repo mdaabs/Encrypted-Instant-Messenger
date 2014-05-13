@@ -24,11 +24,28 @@ class newuser : public QDialog
     
 public:
     explicit newuser(QWidget *parent = 0);
+    QTcpSocket*		addsocket;
+    QBuffer*		buffer;
+     QString *ip;
+     QString *port;
+    QString *addnew;
+   QString *newusers;
+    QString *pass;
+      ~newuser();
 
-    ~newuser();
+signals:
+    void logconnect();
+    void receivedthis(string g);
+    void connectworked(QString* p);
+
 public slots:
         void adduser();
         void cancel();
+        void toggleConnection();
+        void sendMessage(QString* t);
+        void receiveMessage();
+        void checkiftrue(string g);
+       // void displayError(QAbstractSocket::SocketError);
 
 
     
