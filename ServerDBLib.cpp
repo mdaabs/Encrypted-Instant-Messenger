@@ -1,349 +1,366 @@
 //#include "Server.h"
 #include "ServerDBLib.h"
-
+//sqlite3 *db;
 std::string GetUserSalt(std::string username)
 {
-  sqlite3 *db;
-   sqlite3_stmt * stmt;
-   char *zErrMsg = 0;
-   int rc;
-   std::string sql, hashedpassword;
-   int nbyte;
-   int thestep;
-   const unsigned char * text;
+	sqlite3 *db;
+    //sqlite3_mutex_enter(sqlite3_db_mutex(db));
 
-   rc = sqlite3_open(database, &db);
+	sqlite3_stmt * stmt;
+	char *zErrMsg = 0;
+	int rc;
+	std::string sql, hashedpassword;
+	int nbyte;
+	int thestep;
+	const unsigned char * text;
 
-    if( rc ){
-	if(debugmode)
-      fprintf(stderr, "Can't open database: %s\n", sqlite3_errmsg(db));
-      exit(0);
-   }else{
-	if(debugmode)
-      fprintf(stderr, "Opened database successfully\n");
-   }
+	rc = sqlite3_open(database, &db);
 
-   sql = "SELECT SALT FROM USERS WHERE USER_NAME == '" + username + "';";
+	if( rc ){
+		if(debugmode)
+			fprintf(stderr, "Can't open database: %s\n", sqlite3_errmsg(db));
+		exit(0);
+	}else{
+		if(debugmode)
+			fprintf(stderr, "Opened database successfully\n");
+	}
 
-    nbyte = sql.length() + 1;
+	sql = "SELECT SALT FROM USERS WHERE USER_NAME == '" + username + "';";
 
-  sqlite3_prepare(db, sql.c_str(), nbyte, &stmt, NULL);
+	nbyte = sql.length() + 1;
 
-  thestep = sqlite3_step( stmt );
+	sqlite3_prepare(db, sql.c_str(), nbyte, &stmt, NULL);
 
-  if (thestep == SQLITE_ROW)
-  {
-    text = sqlite3_column_text (stmt, 0);
-    //hashedpassword = text;
-    //printf("%s", text);
-    /* text = sqlite3_column_text (stmt, 1);
+	thestep = sqlite3_step( stmt );
+
+	if (thestep == SQLITE_ROW)
+	{
+		text = sqlite3_column_text (stmt, 0);
+		//hashedpassword = text;
+		//printf("%s", text);
+		/* text = sqlite3_column_text (stmt, 1);
      printf("%s", text);
      text = sqlite3_column_text (stmt, 2);
      printf("%s", text);
      printf("%s", "we got a row!");*/
-  }
-  else
-  {
-	if(debugmode)
-    fprintf(stdout, "SOmthing went wrong");
-  }
-  std::string salt((char *) text);//=((reinterpret_cast<char*>(text));
-  return salt;
+	}
+	else
+	{
+		if(debugmode)
+			fprintf(stdout, "SOmthing went wrong");
+	}
+  //  sqlite3_mutex_leave(sqlite3_db_mutex(db));
+	std::string salt((char *) text);//=((reinterpret_cast<char*>(text));
+	return salt;
 
 }
 
 bool IsUserInDatabase(std::string username){
-sqlite3 *db;
-   sqlite3_stmt * stmt;
-   char *zErrMsg = 0;
-   int rc;
-   std::string sql;
-   int nbyte;
-   int thestep;
-	
-   rc = sqlite3_open(database, &db);
+	sqlite3 *db;
 
-    if( rc ){
-	if(debugmode)
-      fprintf(stderr, "Can't open database: %s\n", sqlite3_errmsg(db));
-      exit(0);
-      return false;
-   }else{
-	if(debugmode)
-      fprintf(stderr, "Opened database successfully\n");
-   }
+//    sqlite3_mutex_enter(sqlite3_db_mutex(db));
 
-  sql = "SELECT * FROM USERS WHERE USER_NAME == '" + username +"';";
 
-  nbyte = sql.length() + 1;
+	sqlite3_stmt * stmt;
+	char *zErrMsg = 0;
+	int rc;
+	std::string sql;
+	int nbyte;
+	int thestep;
 
-  sqlite3_prepare(db, sql.c_str(), nbyte, &stmt, NULL);
-     
-     thestep = sqlite3_step( stmt );
+	rc = sqlite3_open(database, &db);
 
-     if( thestep != SQLITE_ROW)
-     {
-	if(debugmode)
-      fprintf(stdout, "Step failed I repeat step failed\n");
-      sqlite3_close(db);
-      return false;
-     }
-     else
-     {
-	if(debugmode)
-       printf("%s", "its in there");
-     }
+	if( rc ){
+		if(debugmode)
+			fprintf(stderr, "Can't open database: %s\n", sqlite3_errmsg(db));
+		exit(0);
+		return false;
+	}else{
+		if(debugmode)
+			fprintf(stderr, "Opened database successfully\n");
+	}
 
-    if( rc != SQLITE_OK ){
-	if(debugmode)
-         fprintf(stderr, "SQL error: %s\n", zErrMsg);
-         sqlite3_free(zErrMsg);
-         sqlite3_close(db);
-         return false;
-      }else{
-	if(debugmode)
-         fprintf(stdout, "user found in database successfully\n");
-       }
-    sqlite3_finalize(stmt);
+	sql = "SELECT * FROM USERS WHERE USER_NAME == '" + username +"';";
 
-   sqlite3_close(db);
+	nbyte = sql.length() + 1;
 
-  return true;
+	sqlite3_prepare(db, sql.c_str(), nbyte, &stmt, NULL);
+
+	thestep = sqlite3_step( stmt );
+
+	if( thestep != SQLITE_ROW)
+	{
+		if(debugmode)
+			fprintf(stdout, "Step failed I repeat step failed\n");
+		sqlite3_close(db);
+		return false;
+	}
+	else
+	{
+		if(debugmode)
+			printf("%s", "its in there");
+	}
+
+	if( rc != SQLITE_OK ){
+		if(debugmode)
+			fprintf(stderr, "SQL error: %s\n", zErrMsg);
+		sqlite3_free(zErrMsg);
+		sqlite3_close(db);
+		return false;
+	}else{
+		if(debugmode)
+			fprintf(stdout, "user found in database successfully\n");
+	}
+	sqlite3_finalize(stmt);
+
+	sqlite3_close(db);
+
+ //   sqlite3_mutex_leave(sqlite3_db_mutex(db));
+
+	return true;
 }
 //DEMITRIOUS FILL IN HERE
 bool AddUserToDatabase(std::string username, std::string password, std::string salt){
 
-  sqlite3 *db;
-   sqlite3_stmt * stmt;
-   char *zErrMsg = 0;
-   int rc;
-   std::string sql;
-   int nbyte;
-password=generateHash(salt, password);
-   rc = sqlite3_open(database, &db);
+	sqlite3 *db;
 
-    if( rc ){
-	if(debugmode)
-      fprintf(stderr, "Can't open database: %s\n", sqlite3_errmsg(db));
-      exit(0);
-      return false;
-   }else{
-	if(debugmode)
-      fprintf(stderr, "Opened database successfully\n");
-   }
+   // sqlite3_mutex_enter(sqlite3_db_mutex(db));
+	sqlite3_stmt * stmt;
+	char *zErrMsg = 0;
+	int rc;
+	std::string sql;
+	int nbyte;
+	password=generateHash(salt, password);
+	rc = sqlite3_open(database, &db);
 
-   //Insert statment
-   sql = "INSERT INTO USERS (USER_NAME, PASSWORD_HASH, SALT) VALUES ('" + username + "','" + password + "','" + salt +"');";
+	if( rc ){
+		if(debugmode)
+			fprintf(stderr, "Can't open database: %s\n", sqlite3_errmsg(db));
+		exit(0);
+		return false;
+	}else{
+		if(debugmode)
+			fprintf(stderr, "Opened database successfully\n");
+	}
 
-nbyte = sql.length() + 1;
-printf("%d", nbyte);
+	//Insert statment
+	sql = "INSERT INTO USERS (USER_NAME, PASSWORD_HASH, SALT) VALUES ('" + username + "','" + password + "','" + salt +"');";
 
-    sqlite3_prepare(db, sql.c_str(), nbyte, &stmt, NULL);
-     
-     if( sqlite3_step( stmt ) != SQLITE_DONE)
-     {
-	if(debugmode)
-      fprintf(stdout, "Step failed I repeat step failed2\n");
-      sqlite3_close(db);
-      return false;
-     }
+	nbyte = sql.length() + 1;
+	printf("%d", nbyte);
 
-    if( rc != SQLITE_OK ){
-	if(debugmode)
-         fprintf(stderr, "SQL error: %s\n", zErrMsg);
-         sqlite3_free(zErrMsg);
-         sqlite3_close(db);
-         return false;
-      }else{
-	if(debugmode)
-         fprintf(stdout, "Records created successfully\n");
-       }
-    sqlite3_finalize(stmt);
+	sqlite3_prepare(db, sql.c_str(), nbyte, &stmt, NULL);
 
-   sqlite3_close(db);
+	if( sqlite3_step( stmt ) != SQLITE_DONE)
+	{
+		if(debugmode)
+			fprintf(stdout, "Step failed I repeat step failed2\n");
+		sqlite3_close(db);
+		return false;
+	}
 
-return true;
+	if( rc != SQLITE_OK ){
+		if(debugmode)
+			fprintf(stderr, "SQL error: %s\n", zErrMsg);
+		sqlite3_free(zErrMsg);
+		sqlite3_close(db);
+		return false;
+	}else{
+		if(debugmode)
+			fprintf(stdout, "Records created successfully\n");
+	}
+	sqlite3_finalize(stmt);
 
+	sqlite3_close(db);
+
+//	return true;
+ //   sqlite3_mutex_leave(sqlite3_db_mutex(db));
 	return true;
 }
 
 bool ValidateUserInDatabase(std::string username, std::string password){
 
+  //  sqlite3_mutex_enter(sqlite3_db_mutex(db));
+	sqlite3 *db;
+	sqlite3_stmt * stmt;
+	char *zErrMsg = 0;
+	int rc;
+	std::string sql, hashedpassword;
+	int nbyte;
+	int thestep;
 
-   sqlite3 *db;
-   sqlite3_stmt * stmt;
-   char *zErrMsg = 0;
-   int rc;
-   std::string sql, hashedpassword;
-   int nbyte;
-   int thestep;
+	//MARIO!!! hashedpassword = hasfunction(password) SO FIX BELOW;
 
-   //MARIO!!! hashedpassword = hasfunction(password) SO FIX BELOW;
+	hashedpassword = password;
 
-   hashedpassword = password;
+	rc = sqlite3_open(database, &db);
 
-   rc = sqlite3_open(database, &db);
+	if( rc ){
+		if(debugmode)
+			fprintf(stderr, "Can't open database: %s\n", sqlite3_errmsg(db));
+		exit(0);
+		return false;
+	}else{
+		if(debugmode)
+			fprintf(stderr, "Opened database successfully\n");
+	}
 
-    if( rc ){
-	if(debugmode)
-      fprintf(stderr, "Can't open database: %s\n", sqlite3_errmsg(db));
-      exit(0);
-      return false;
-   }else{
-	if(debugmode)
-      fprintf(stderr, "Opened database successfully\n");
-   }
+	sql = "SELECT * FROM USERS WHERE USER_NAME == '" + username +"' AND PASSWORD_HASH == '" + hashedpassword + "';";
 
-  sql = "SELECT * FROM USERS WHERE USER_NAME == '" + username +"' AND PASSWORD_HASH == '" + hashedpassword + "';";
+	nbyte = sql.length() + 1;
 
-  nbyte = sql.length() + 1;
+	sqlite3_prepare(db, sql.c_str(), nbyte, &stmt, NULL);
 
-  sqlite3_prepare(db, sql.c_str(), nbyte, &stmt, NULL);
-     
-     thestep = sqlite3_step( stmt );
+	thestep = sqlite3_step( stmt );
 
-     if( thestep != SQLITE_ROW)
-     {
-	if(debugmode)
-      fprintf(stdout, "Step failed I repeat step failedz\n");
-      sqlite3_close(db);
-      return false;
-     }
-     else
-     {
-	if(debugmode)
-       printf("%s", "its in there");
-     }
+	if( thestep != SQLITE_ROW)
+	{
+		if(debugmode)
+			fprintf(stdout, "Step failed I repeat step failedz\n");
+		sqlite3_close(db);
+		return false;
+	}
+	else
+	{
+		if(debugmode)
+			printf("%s", "its in there");
+	}
 
-    if( rc != SQLITE_OK ){
-	if(debugmode)
-         fprintf(stderr, "SQL error: %s\n", zErrMsg);
-         sqlite3_free(zErrMsg);
-         sqlite3_close(db);
-         return false;
-      }else{
-	if(debugmode)
-         fprintf(stdout, "user found in database successfully\n");
-       }
-    sqlite3_finalize(stmt);
+	if( rc != SQLITE_OK ){
+		if(debugmode)
+			fprintf(stderr, "SQL error: %s\n", zErrMsg);
+		sqlite3_free(zErrMsg);
+		sqlite3_close(db);
+		return false;
+	}else{
+		if(debugmode)
+			fprintf(stdout, "user found in database successfully\n");
+	}
+	sqlite3_finalize(stmt);
 
-   sqlite3_close(db);
+	sqlite3_close(db);
 
-  return true;
+//    sqlite3_mutex_leave(sqlite3_db_mutex(db));
+
+	return true;
 }
 
 bool UpdatePassword(std::string username, std::string newPassWord)
 {
-   sqlite3 *db;
-   sqlite3_stmt * stmt;
-   char *zErrMsg = 0;
-   int rc;
-   std::string sql;
-   int nbyte;
 
-   rc = sqlite3_open(database, &db);
+  //  sqlite3_mutex_enter(sqlite3_db_mutex(db));
+	sqlite3 *db;
+	sqlite3_stmt * stmt;
+	char *zErrMsg = 0;
+	int rc;
+	std::string sql;
+	int nbyte;
 
-    if( rc ){
-	if(debugmode)
-      fprintf(stderr, "Can't open database: %s\n", sqlite3_errmsg(db));
-      exit(0);
-      return false;
-   }else{
-	if(debugmode)
-      fprintf(stderr, "Opened database successfully\n");
-   }
+	rc = sqlite3_open(database, &db);
 
-   //Insert statment
-   sql = "UPDATE USERS SET PASSWORD_HASH = '"+ newPassWord + "' WHERE USER_NAME == '" + username + "';";
+	if( rc ){
+		if(debugmode)
+			fprintf(stderr, "Can't open database: %s\n", sqlite3_errmsg(db));
+		exit(0);
+		return false;
+	}else{
+		if(debugmode)
+			fprintf(stderr, "Opened database successfully\n");
+	}
 
-nbyte = sql.length() + 1;
+	//Insert statment
+	sql = "UPDATE USERS SET PASSWORD_HASH = '"+ newPassWord + "' WHERE USER_NAME == '" + username + "';";
+
+	nbyte = sql.length() + 1;
 
 
-    sqlite3_prepare(db, sql.c_str(), nbyte, &stmt, NULL);
-     
-     if( sqlite3_step( stmt ) != SQLITE_DONE)
-     {
-	if(debugmode)
-      fprintf(stdout, "Step failed I repeat step failed2\n");
-      sqlite3_close(db);
-      return false;
-     }
+	sqlite3_prepare(db, sql.c_str(), nbyte, &stmt, NULL);
 
-    if( rc != SQLITE_OK ){
-	if(debugmode)
-         fprintf(stderr, "SQL error: %s\n", zErrMsg);
-         sqlite3_free(zErrMsg);
-         sqlite3_close(db);
-         return false;
-      }else{
-	if(debugmode)
-         fprintf(stdout, "Records created successfully\n");
-       }
-    sqlite3_finalize(stmt);
+	if( sqlite3_step( stmt ) != SQLITE_DONE)
+	{
+		if(debugmode)
+			fprintf(stdout, "Step failed I repeat step failed2\n");
+		sqlite3_close(db);
+		return false;
+	}
 
-   sqlite3_close(db);
+	if( rc != SQLITE_OK ){
+		if(debugmode)
+			fprintf(stderr, "SQL error: %s\n", zErrMsg);
+		sqlite3_free(zErrMsg);
+		sqlite3_close(db);
+		return false;
+	}else{
+		if(debugmode)
+			fprintf(stdout, "Records created successfully\n");
+	}
+	sqlite3_finalize(stmt);
 
-return true;
+	sqlite3_close(db);
+
+  //  sqlite3_mutex_leave(sqlite3_db_mutex(db));
+
+	return true;
 }
 
 
 bool InitializeDatabase(){
 
 
-  sqlite3 *db;
-   sqlite3_stmt * stmt;
-   char *zErrMsg = 0;
-   int rc;
-   std::string sql, hashedpassword;
-   int nbyte;
-   int thestep;
+	sqlite3 *db;
+	sqlite3_stmt * stmt;
+	char *zErrMsg = 0;
+	int rc;
+	std::string sql, hashedpassword;
+	int nbyte;
+	int thestep;
 	//const char * dbspec=dbname.c_str();
-   rc = sqlite3_open(database, &db);
+	rc = sqlite3_open(database, &db);
 
-    if( rc ){
-	if(debugmode)
-      fprintf(stderr, "Can't open database: %s\n", sqlite3_errmsg(db));
-      exit(0);
-      return false;
-   }else{
-	if(debugmode)
-      fprintf(stderr, "Opened database successfully\n");
-   }
+	if( rc ){
+		if(debugmode)
+			fprintf(stderr, "Can't open database: %s\n", sqlite3_errmsg(db));
+		exit(0);
+		return false;
+	}else{
+		if(debugmode)
+			fprintf(stderr, "Opened database successfully\n");
+	}
 	std::string dbname (database);
-  sql = "CREATE TABLE "+ dbname +"(USER_NAME CHAR(120) PRIMARY KEY NOT NULL, PASSWORD_HASH CHAR(120) NOT NULL, SALT CHAR(120) NOT NULL);";
+	sql = "CREATE TABLE "+ dbname +"(USER_NAME CHAR(120) PRIMARY KEY NOT NULL, PASSWORD_HASH CHAR(120) NOT NULL, SALT CHAR(120) NOT NULL);";
 
-  nbyte = sql.length() + 1;
+	nbyte = sql.length() + 1;
 
-  sqlite3_prepare(db, sql.c_str(), nbyte, &stmt, NULL);
-     
-     thestep = sqlite3_step( stmt );
+	sqlite3_prepare(db, sql.c_str(), nbyte, &stmt, NULL);
 
-     if( thestep != SQLITE_ROW)
-     {
-	if(debugmode)
-      fprintf(stdout, "Step failed I repeat step failedz\n");
-      sqlite3_close(db);
-      return false;
-     }
-     else
-     {
-	if(debugmode)
-       printf("%s", "its in there");
-     }
+	thestep = sqlite3_step( stmt );
 
-    if( rc != SQLITE_OK ){
-	if(debugmode)
-         fprintf(stderr, "SQL error: %s\n", zErrMsg);
-         sqlite3_free(zErrMsg);
-         sqlite3_close(db);
-         return false;
-      }else{
-	if(debugmode)
-         fprintf(stdout, "user found in database successfully\n");
-       }
-    sqlite3_finalize(stmt);
+	if( thestep != SQLITE_ROW)
+	{
+		if(debugmode)
+			fprintf(stdout, "Step failed I repeat step failedz\n");
+		sqlite3_close(db);
+		return false;
+	}
+	else
+	{
+		if(debugmode)
+			printf("%s", "its in there");
+	}
 
-   sqlite3_close(db);
+	if( rc != SQLITE_OK ){
+		if(debugmode)
+			fprintf(stderr, "SQL error: %s\n", zErrMsg);
+		sqlite3_free(zErrMsg);
+		sqlite3_close(db);
+		return false;
+	}else{
+		if(debugmode)
+			fprintf(stdout, "user found in database successfully\n");
+	}
+	sqlite3_finalize(stmt);
 
-  return true;
+	sqlite3_close(db);
+
+	return true;
 }

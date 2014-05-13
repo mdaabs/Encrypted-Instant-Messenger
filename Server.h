@@ -87,7 +87,7 @@ extern std::string f="FALSE";
 extern char * database;
 extern std::string outfile;
 extern bool debugmode;
-
+//extern sqlite3 *db;
 
 
 

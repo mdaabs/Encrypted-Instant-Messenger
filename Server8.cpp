@@ -18,8 +18,7 @@
  *	CHANGEPASSWORD=username*PASS:password*NEWPASS:newpassword
  *
  *	To Do:
- *	sql mutex
- *	Change Password 
+ *	Change Password breaks
  *
  *	RSA
  *	log file
@@ -40,7 +39,7 @@
  *	-d debug
  *	-D daemonize
  *	-o logfile (uninmplemented)
- *	-i initialize database (unimplemented)
+ *	-i initialize database (doesnt work)
  *
  *
  *	
@@ -54,6 +53,9 @@
 //std::unordered_map<std::string, int*> *username_sockets=new std::unordered_map<std::string, int*>();
 //std::unordered_map<std::string, std::string> *username_keyiv=new std::unordered_map<std::string, std::string>();
 
+pthread_mutex_t db_mutex = PTHREAD_MUTEX_INITIALIZER;
+//	pthread_mutex_lock(&db_mutex);
+//	pthread_mutex_unlock(&db_mutex);
 
 char * database;
 std::string outfile;
@@ -168,17 +170,26 @@ void *ThreadMain(void *clsk){
 
 			username=GetUserName(input);
 			password=GetUserPassword(input);
+
+			pthread_mutex_lock(&db_mutex);
 			salt=GetUserSalt(username);
+			pthread_mutex_unlock(&db_mutex);
+
 			if(debugmode)
 				std::cout<<"salt returned as: "<<salt<<std::endl;
 			password=generateHash(salt, password);
 			if(debugmode)
 				std::cout<<"hashed pass: "<<password<<std::endl;
+
+			pthread_mutex_lock(&db_mutex);
 			loggedon=ValidateUserInDatabase(username, password);
+			pthread_mutex_unlock(&db_mutex);
+
 			if(!loggedon){
 				if(debugmode)
 					std::cout<<"invalid login credentials"<<std::endl;
-				SendMessage(username, username,f);
+				//SendMessage(username, username,f);
+				write(client_socket, f.c_str(), f.size());
 				close(client_socket);
 				pthread_exit(0);
 				listening=false;
@@ -227,7 +238,7 @@ void *ThreadMain(void *clsk){
 			if(!loggedon){
 				if(debugmode)
 					std::cout<<"user not logged in"<<std::endl;
-				SendMessage(username, username,f);
+					write(client_socket, f.c_str(), f.size());
 				//close(client_socket);
 				//pthread_exit(0);
 				//listening=false;
@@ -301,7 +312,9 @@ void *ThreadMain(void *clsk){
 			username=GetUserName(input);
 			password=GetUserPassword(input);
 			{
+				pthread_mutex_lock(&db_mutex);
 				bool user_exists=IsUserInDatabase(username);
+				pthread_mutex_unlock(&db_mutex);
 				if(user_exists){
 					if(debugmode)
 						std::cout<<"user: "<<username<<"username taken"<<std::endl;
@@ -316,7 +329,11 @@ void *ThreadMain(void *clsk){
 			//		password=generateHash(salt, password);
 			if (debugmode)
 				std::cout<<"salt generated: "<<salt<<std::endl;
+
+			pthread_mutex_lock(&db_mutex);
 			AddUserToDatabase(username, password, salt);
+			pthread_mutex_unlock(&db_mutex);
+
 			close(client_socket);
 			pthread_exit(0);
 			break;
@@ -326,9 +343,19 @@ void *ThreadMain(void *clsk){
 			//IsUserInDatabase(username);
 			std::string username=GetUserName(input);
 			std::string oldpassword=GetOldPassword(input);
+
+			pthread_mutex_lock(&db_mutex);
 			salt=GetUserSalt(username);
+			pthread_mutex_unlock(&db_mutex);
+
 			oldpassword=generateHash(salt, oldpassword);
+			if(debugmode)
+				std::cout<<"hashed oldpass: "<<oldpassword<<std::endl;
+
+			pthread_mutex_lock(&db_mutex);
 			bool validated=ValidateUserInDatabase(username, oldpassword);
+			pthread_mutex_unlock(&db_mutex);
+
 			if(!validated){
 				if(debugmode)
 					std::cout<<"invalid credentials"<<std::endl;
@@ -338,7 +365,11 @@ void *ThreadMain(void *clsk){
 
 			}
 			std::string newpassword=GetNewPassword(input);
+
+			pthread_mutex_lock(&db_mutex);
 			UpdatePassword(username, newpassword);
+			pthread_mutex_unlock(&db_mutex);
+
 			SendMessage(username, username,t);
 			close(client_socket);
 			pthread_exit(0);
@@ -346,7 +377,10 @@ void *ThreadMain(void *clsk){
 		}
 		case INVALID:
 			if(debugmode)
-				std::cout<<"invalid command received"<<std::endl;			
+				std::cout<<"invalid command received"<<std::endl;		
+			write(client_socket, f.c_str(), f.size());
+			close(client_socket);
+			pthread_exit(0);
 			break;
 		default:
 			break;
