@@ -273,8 +273,11 @@ bool UpdatePassword(std::string username, std::string newPassWord)
 
 	nbyte = sql.length() + 1;
 
-
+	if(debugmode)
+			std::cout<<"preparing sql statement"<<std::endl;
 	sqlite3_prepare(db, sql.c_str(), nbyte, &stmt, NULL);
+	if(debugmode)
+			std::cout<<"sql statement prepared"<<std::endl;
 
 	if( sqlite3_step( stmt ) != SQLITE_DONE)
 	{
@@ -294,8 +297,11 @@ bool UpdatePassword(std::string username, std::string newPassWord)
 		if(debugmode)
 			fprintf(stdout, "Records created successfully\n");
 	}
+	if(debugmode)
+			std::cout<<"sql finalizing statement"<<std::endl;
 	sqlite3_finalize(stmt);
-
+	if(debugmode)
+			std::cout<<"sql close"<<std::endl;
 	sqlite3_close(db);
 
   //  sqlite3_mutex_leave(sqlite3_db_mutex(db));

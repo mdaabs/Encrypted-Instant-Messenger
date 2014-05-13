@@ -170,6 +170,20 @@ void *ThreadMain(void *clsk){
 
 			username=GetUserName(input);
 			password=GetUserPassword(input);
+			/*
+			unsigned char* char_key=convertString(key);
+			unsigned char* char_iv=convertString(iv);
+
+			unsigned char *decrypt = NULL;
+			//   Encryption crypto;
+
+			cryptobject.DecryptAes(( unsigned char*)message.c_str(), message.size() + 1, &decrypt, ( unsigned char*)char_key, ( unsigned char*)char_iv);
+
+			if(debugmode)
+				std::cout<<"decrypt: "<<(const char *) decrypt<<"\n";
+			password=(const char *) decrypt;
+*/
+
 
 			pthread_mutex_lock(&db_mutex);
 			salt=GetUserSalt(username);
@@ -365,15 +379,22 @@ void *ThreadMain(void *clsk){
 
 			}
 			std::string newpassword=GetNewPassword(input);
-
+			newpassword=generateHash(salt, newpassword);
 			pthread_mutex_lock(&db_mutex);
-			UpdatePassword(username, newpassword);
+			bool updated=UpdatePassword(username, newpassword);
 			pthread_mutex_unlock(&db_mutex);
-
+			if(updated){
 			SendMessage(username, username,t);
 			close(client_socket);
 			pthread_exit(0);
 			break;
+			}
+			else{
+			write(client_socket, f.c_str(), f.size());
+			close(client_socket);
+			pthread_exit(0);
+			break;
+			}
 		}
 		case INVALID:
 			if(debugmode)
