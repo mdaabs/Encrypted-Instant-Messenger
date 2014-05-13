@@ -44,7 +44,7 @@ int base64Decode(const char *b64message, const size_t length, unsigned char **bu
     decodedLength = BIO_read(bio, *buffer, length);
     (*buffer)[decodedLength] = '\0';
      
-    BIO_free_all(bio);
+    BIO_free_all(bio); 
     fclose(stream);
      
     return decodedLength;

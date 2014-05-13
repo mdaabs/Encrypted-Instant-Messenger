@@ -10,93 +10,152 @@
 *
 ********************************************************/
 
-#include <arpa/inet.h>
-#include <errno.h>
-#include <netdb.h>
-#include <stdlib.h>
 #include <string.h>
+#include <cstring>
+#include <unistd.h>
+#include <stdio.h>
+#include <netdb.h>
 #include <sys/types.h>
 #include <sys/socket.h>
-#include <unistd.h>
-
-#include <fstream>
+#include <netinet/in.h>
 #include <iostream>
+#include <fstream>
+#include <sstream>
+#include <iomanip>
+#include <strings.h>
+#include <stdlib.h>
+#include <string>
+#include "client.h"
+#include <arpa/inet.h>
+#define BUFSIZE 256
 
 using namespace std;
 
-#define BUFSIZE 1024
+/*enum messagetype {
+	ADDUSER,
+	CHANGEPASSWORD,
+	LOGIN,
+	LOGOFF,
+	SENDMESSAGE,
+	INVALID
+};
 
-//void sendlogin(string username, string password, int server);
-bool connect(string serverIP, unsigned short port);
-void sendUsername(string username, int server);
-void sendPassword(string password, int server);
-//void sendsalt(char *salt, int server);
-//void getkey();
+messagetype ReceiveAction(){
+	return LOGIN;
+}*/
 
-int main()
+int *connectToServer(string serverIP, string port)
 {
-//    connect("127.0.0.1", 8080);
-}
+	unsigned short server_port;
+	unsigned int address_length;
 
-bool connect(string serverIP, unsigned short port){
-
-    // server IP is converted from string to char
-    char *IP = new char[serverIP.size() + 1];
+	char *IP = new char[serverIP.size() + 1];
     copy(serverIP.begin(), serverIP.end(), IP);
     IP[serverIP.size()] = '\0';
 
-    // setup socket address structure
+	//Display the hosting port number
+	server_port=atoi(port.c_str());
+	cout << "Hosting on port: " << server_port << endl;
+
+
+/*   	if((server_port > 65535) || (server_port < 2000)){
+      		cerr << "Please enter a port number between 2000 - 65535" << endl;
+    		exit(-1);
+   	}*/
+
+	// setup socket address structure
     struct sockaddr_in server_addr;
     memset(&server_addr,0,sizeof(server_addr));
-    server_addr.sin_family = AF_INET;
-    server_addr.sin_addr.s_addr = inet_addr(IP); /* Server IP address */ 
-    server_addr.sin_port = htons(port);
-    //memcpy(&server_addr.sin_addr, hostEntry->h_addr_list[0], hostEntry->h_length);
+    server_addr.sin_family = AF_INET;		    //basic address family protocol
+    server_addr.sin_addr.s_addr = inet_addr(IP);    //take any incoming interface
+    server_addr.sin_port = htons(server_port);	    //local port
 
-      // create socket
-    int server = socket(PF_INET,SOCK_STREAM,0);
-    if (server < 0) {
-        perror("socket");
-        exit(-1);
+	//create socket
+    int *client_socket = new int;	
+	*client_socket = socket( PF_INET, SOCK_STREAM, IPPROTO_TCP );
+	
+	if (client_socket < 0){
+		cerr << "Failed to create socket" << endl;
+		exit(-1);
+	} 
+	
+	cout << "Using socket: " << client_socket << endl;
+
+	//connect to server
+	if(connect(*client_socket,(struct sockaddr *) &server_addr, sizeof(server_addr)) < 0) {
+		cerr << "Failed to connect to server" << endl;
+		exit(-1);
+	}
+
+	//return socketptr;
+	return client_socket;
+}
+
+bool sendLogin(string login, int *socket) {
+    if(write(*socket, login.c_str(), sizeof(login)) < 0) {
+    	cerr << "Failed to send login" << endl;
+    	return false;
+    } else
+    	return true;
+}
+
+bool receiveLogin(int *socket) {
+	//Hold response from the server
+	char* validator = new char[BUFSIZE];
+	if(read(*socket,validator,BUFSIZE) < 0) {
+    	cerr << "Failed to read login response" << endl;
+    	return false;
+    } else if (validator == "TRUE")
+    	return true;
+    else
+    	return false;
+}
+
+bool sendMessage(string message, int *socket){
+
+	if(write(*socket, message.c_str(), sizeof(message))<0) {
+		cerr << "Failed to send user message" << endl;
+		return false;
+	} else
+		return true;
+}
+
+string receiveMessage(int *socket) {
+	char* messageBuf = new char[BUFSIZE];
+	if(read(*socket,messageBuf,BUFSIZE) < 0) {
+    	cerr << "Failed to read login response" << endl;
+    	exit(-1);
     }
+    return messageBuf;
+}
 
-      // connect to server
-    if (connect(server,(const struct sockaddr *)&server_addr,sizeof(server_addr)) < 0) {
-        perror("connect");
-        exit(-1);
+string getIVAndKey(int *socket) {
+	char* ivKeyBuf = new char[BUFSIZE];
+	if(read(*socket,ivKeyBuf,BUFSIZE) < 0) {
+    	cerr << "Failed to get IV and Key" << endl;
+    	exit(-1);
     }
+    return ivKeyBuf;
 }
 
-void sendUsername(string username, int server) {
-    char* usernameBuff = new char[BUFSIZE+1];
-    send(server, username.c_str(), username.length(), 0);
-    memset(usernameBuff,0,BUFSIZE);
-    recv(server,usernameBuff,BUFSIZE,0);
+int main()
+{
+
+/*	TEST:
+	int *socket = connectToServer("127.0.0.1","8080");
+	char buffer[256];
+	cout<<"address is: "<<&socket<<endl;
+	cout<<"socket is: "<<socket<<endl;
+
+	while(1){
+		char buffer[256];
+		memset(buffer,0,sizeof(buffer));
+		cout<<"reading..."<<endl;
+		read(*socket,buffer,256);
+		cout<<"read"<<endl;
+		string input (buffer);
+		cout<<input<<endl;
+	}*/
+
+    return 0;
 }
-
-void sendPassword(string password, int server) {
-    char* passwordBuff = new char[BUFSIZE+1];
-    send(server, password.c_str(), password.length(), 0);
-    memset(passwordBuff,0,BUFSIZE);
-    recv(server,passwordBuff,BUFSIZE,0);
-}
-
-/*void sendsalt(char *salt, int server) {
-    salt = new char[BUFSIZE+1];
-    send(server, salt.c_str(), salt.length(), 0);
-    memset(salt,0,BUFSIZE);
-    recv(server,salt,BUFSIZE,0);
-}*/
-
-/*void sendlogin(string username, string password, int server){
-    char* usernameBuff = new char[BUFSIZE+1];
-    send(server, username.c_str(), username.length(), 0);
-    memset(usernameBuff,0,BUFSIZE);
-    recv(server,usernameBuff,BUFSIZE,0);
-
-    char* passwordBuff = new char[BUFSIZE+1];
-    send(server, password.c_str(), password.length(), 0);
-    memset(passwordBuff,0,BUFSIZE);
-    recv(server,passwordBuff,BUFSIZE,0);
-
-}*/

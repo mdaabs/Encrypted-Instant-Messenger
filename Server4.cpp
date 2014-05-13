@@ -69,7 +69,8 @@
 #include <sstream>
 #include <iomanip>
 
-//#include "User.h"
+#include "User.h"
+#include "sqlite3.h"
 
 //HARDWARE DEPENDANT
 #define MAXINCOMINGCLIENTS 50
@@ -130,14 +131,166 @@ bool IsUserOnline(std::string username){
 
 //DEMITRIOUS FILL IN HERE
 bool IsUserInDatabase(std::string username){
+sqlite3 *db;
+   sqlite3_stmt * stmt;
+   char *zErrMsg = 0;
+   int rc;
+   std::string sql;
+   int nbyte;
+   int thestep;
 
-	return true;
+   rc = sqlite3_open("CryptChat.db", &db);
+
+    if( rc ){
+      fprintf(stderr, "Can't open database: %s\n", sqlite3_errmsg(db));
+      exit(0);
+      return false;
+   }else{
+      fprintf(stderr, "Opened database successfully\n");
+   }
+
+  sql = "SELECT * FROM USERS WHERE USER_NAME == '" + username +"';";
+
+  nbyte = sql.length() + 1;
+
+  sqlite3_prepare(db, sql.c_str(), nbyte, &stmt, NULL);
+     
+     thestep = sqlite3_step( stmt );
+
+     if( thestep != SQLITE_ROW)
+     {
+      fprintf(stdout, "Step failed I repeat step failed\n");
+      sqlite3_close(db);
+      return false;
+     }
+     else
+     {
+       printf("%s", "its in there");
+     }
+
+    if( rc != SQLITE_OK ){
+         fprintf(stderr, "SQL error: %s\n", zErrMsg);
+         sqlite3_free(zErrMsg);
+         sqlite3_close(db);
+         return false;
+      }else{
+         fprintf(stdout, "user found in database successfully\n");
+       }
+    sqlite3_finalize(stmt);
+
+   sqlite3_close(db);
+
+  return true;
 }
+
 //DEMITRIOUS FILL IN HERE
-bool AddUserToDatabase(std::string username){
+bool AddUserToDatabase(std::string username, std::string password, std::string salt, std::string iv, std::string key){
+
+  sqlite3 *db;
+   sqlite3_stmt * stmt;
+   char *zErrMsg = 0;
+   int rc;
+   std::string sql;
+   int nbyte;
+
+   rc = sqlite3_open("CryptChat.db", &db);
+
+    if( rc ){
+      fprintf(stderr, "Can't open database: %s\n", sqlite3_errmsg(db));
+      exit(0);
+      return false;
+   }else{
+      fprintf(stderr, "Opened database successfully\n");
+   }
+
+   //Insert statment
+   sql = "INSERT INTO USERS (USER_NAME, PASSWORD_HASH, SALT, IV, KEY) VALUES ('" + username + "','" + password + "','" + salt + "','" + iv + "','" + key + "');";
+
+nbyte = sql.length() + 1;
+printf("%d", nbyte);
+
+    sqlite3_prepare(db, sql.c_str(), nbyte, &stmt, NULL);
+     
+     if( sqlite3_step( stmt ) != SQLITE_DONE)
+     {
+      fprintf(stdout, "Step failed I repeat step failed2\n");
+      sqlite3_close(db);
+      return false;
+     }
+
+    if( rc != SQLITE_OK ){
+         fprintf(stderr, "SQL error: %s\n", zErrMsg);
+         sqlite3_free(zErrMsg);
+         sqlite3_close(db);
+         return false;
+      }else{
+         fprintf(stdout, "Records created successfully\n");
+       }
+    sqlite3_finalize(stmt);
+
+   sqlite3_close(db);
+
+return true;
+}
+
+//DEMITRIOUS FILL IN HERE
+bool validateUserInDatabase(std::string username, std::string password){
 
 
-	return true;
+  sqlite3 *db;
+   sqlite3_stmt * stmt;
+   char *zErrMsg = 0;
+   int rc;
+   std::string sql, hashedpassword;
+   int nbyte;
+   int thestep;
+
+   //MARIO!!! hashedpassword = hasfunction(password) SO FIX BELOW;
+
+   hashedpassword = password;
+
+   rc = sqlite3_open("CryptChat.db", &db);
+
+    if( rc ){
+      fprintf(stderr, "Can't open database: %s\n", sqlite3_errmsg(db));
+      exit(0);
+      return false;
+   }else{
+      fprintf(stderr, "Opened database successfully\n");
+   }
+
+  sql = "SELECT * FROM USERS WHERE USER_NAME == '" + username +"' AND PASSWORD_HASH == '" + hashedpassword + "';";
+
+  nbyte = sql.length() + 1;
+
+  sqlite3_prepare(db, sql.c_str(), nbyte, &stmt, NULL);
+     
+     thestep = sqlite3_step( stmt );
+
+     if( thestep != SQLITE_ROW)
+     {
+      fprintf(stdout, "Step failed I repeat step failedz\n");
+      sqlite3_close(db);
+      return false;
+     }
+     else
+     {
+       printf("%s", "its in there");
+     }
+
+    if( rc != SQLITE_OK ){
+         fprintf(stderr, "SQL error: %s\n", zErrMsg);
+         sqlite3_free(zErrMsg);
+         sqlite3_close(db);
+         return false;
+      }else{
+         fprintf(stdout, "user found in database successfully\n");
+       }
+    sqlite3_finalize(stmt);
+
+   sqlite3_close(db);
+
+  return true;
 }
 
 std::string GetUserName(std::string input){
@@ -153,10 +306,10 @@ std::string GetUserName(std::string input){
 void SendMessage(std::string sender, std::string receiver, std::string message){
 	std::cout<<"about to try message sending"<<std::endl;
 	try{	
-		std::cout<<"getting name"<<std::endl;
+	std::cout<<"getting name"<<std::endl;
 		int *receiver_socket=username_sockets->at(receiver);
 		write(*receiver_socket, message.c_str(), message.size());
-		std::cout<<"sent"<<std::endl;
+	std::cout<<"sent"<<std::endl;
 	}
 	catch (std::exception e){
 		std::cout<<"error occured on lookup"<<std::endl;
@@ -222,20 +375,20 @@ void *ThreadMain(void *clsk){
 	std::cout<<"Successful thread, listening to client: "<<*((int*)clsk)<<std::endl;
 	bool listening=true;
 	while(listening){
-		std::cout<<"Recieving input"<<std::endl;
-		memset(buffer,0,BUFFERSIZE);
-		read(client_socket, buffer, BUFFERSIZE);
-		std::cout<<"Successfully received message"<<std::endl;
-		std::string input(buffer);
-		std::cout<<"decrypting input..."<<std::endl;
-		//input=DecryptInput(input);	//waiting for mario's code.
-		std::cout<<"converting message type"<<std::endl;
-		messagetype action=ParseData(input);
+	std::cout<<"Recieving input"<<std::endl;
+	memset(buffer,0,BUFFERSIZE);
+	read(client_socket, buffer, BUFFERSIZE);
+	std::cout<<"Successfully received message"<<std::endl;
+	std::string input(buffer);
+	std::cout<<"decrypting input..."<<std::endl;
+	//input=DecryptInput(input);	//waiting for mario's code.
+	std::cout<<"converting message type"<<std::endl;
+	messagetype action=ParseData(input);
 
-		std::string receiver;
-		std::string message;
+	std::string receiver;
+	std::string message;
 
-		switch(action){
+	switch(action){
 		case LOGIN:
 			//add validation code
 			username=GetUserName(input);
@@ -267,23 +420,15 @@ void *ThreadMain(void *clsk){
 			message=GetMessage(input);
 			SendMessage(username, receiver,message);
 			break;
-
 		case ADDUSER:
 			//add validation code
 			username=GetMessageReceiver(input);
 			IsUserInDatabase(username);
 			AddUserToDatabase(username);
 			break;
-
-		case CHANGEPASSWORD:
-			IsUserInDatabase(username);
-			
-			break;
-
 		case INVALID:
 			//std::string invalid="invalid command";
 			//SendMessage(username,
-			break;
 		default:
 			break;
 		
@@ -365,7 +510,7 @@ int main(int argc, char * argv[]){
 
 	}
 
-//need to delete int* 
+
 delete username_sockets;
 
 return 0;

@@ -69,7 +69,7 @@
 #include <sstream>
 #include <iomanip>
 
-//#include "User.h"
+#include "User.h"
 
 //HARDWARE DEPENDANT
 #define MAXINCOMINGCLIENTS 50

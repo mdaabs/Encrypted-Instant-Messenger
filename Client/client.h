@@ -9,27 +9,33 @@
 * Header file for functions found in client.cpp
 *
 ********************************************************/
+#include <string.h>
+#include <string>
+#include <iostream>
+#include <fstream>
 
 #ifndef CLIENT_H
 #define CLIENT_H
+using namespace std;
 
-// Send username and password to the server
-//void sendlogin(string username, string password, int server);
+// Establishes a connection to the server, returns a socket pointer
+int *connectToServer(string serverIP, string port);
 
-// Establishes a connection to the server, returns true if connected, false otherwise
-bool connect(string serverIP, unsigned short port);
+// Send username and password to the server, and return true or false
+bool sendLogin(string login, int *socket);
 
-// Send username to the server
-void sendUsername(string username, int server);
+// Receive a validation response from the server regarding username and password;
+// return true or false
+bool receiveLogin(int *socket);
 
-// Send password to the server
-void sendPassword(string password, int server);
+// Send a user's message to the server; return true or false
+bool sendMessage(string message, int *socket);
 
-// Send the hash key
-void sendkey(char *key, int server);
+// Receive a user's message from the server, and return the message
+string receiveMessage(int *socket);
 
-// Get the hash key
-void getkey();
+// Get the IV and Key from the server
+string getIVAndKey(int *socket);
 
 #endif
  
