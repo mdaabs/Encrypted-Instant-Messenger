@@ -92,6 +92,15 @@ void GetCredentials(std::string t){
 
 }
 
+std::string LoadFile(){
+    std::ifstream in(credentialfile);
+    std::stringstream buffer;
+    buffer << in.rdbuf();
+    std::string test = buffer.str();
+    std::cout << test << std::endl << std::endl;
+}
+
+
 messagetype ParseData(std::string input){
 
 	std::string action=input.substr(0, input.find(equal_delimiter));
@@ -133,7 +142,7 @@ void *ThreadMain(void *clsk){
 	char buffer[BUFFERSIZE];
 	char pingbuffer[BUFFERSIZE];
 	std::string username, password, salt, iv, key, key_iv;
-	std::string ping="PING";
+	std::string cred="CRED=";
 	bool loggedon=false;
 
 	if(debugmode)
@@ -307,8 +316,18 @@ void *ThreadMain(void *clsk){
 				}
 				//SendMessage(username, username,key_iv);
 				{
+
+	unsigned char* auth_key=convertString(cred_key);
+
+	unsigned char* auth_iv=convertString(cred_iv);
+
+	unsigned char *encrypted_creds = NULL;
 				std::string formattedcreds=FormatCredReq(key, iv);
-				SendMessage(username, username,formattedcreds);
+
+	cryptobject.EncryptAes((const unsigned char*)formattedcreds.c_str(), formattedcreds.size() + 1, &encrypted_creds, ( unsigned char*)auth_key, ( unsigned char*)auth_iv);
+		std::string sendcreds=cred+(const char*)encrypted_creds;
+
+				SendMessage(username, username,sendcreds);
 				}
 			}
 			if(outfilespecified){
@@ -579,7 +598,7 @@ int main(int argc, char * argv[]){
 		}
 
 	}
-	std::string t="hi";
+	std::string t=LoadFile();
 	GetCredentials(t);
 
 	if(debugmode){

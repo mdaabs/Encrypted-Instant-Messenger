@@ -48,7 +48,7 @@ void WriteToLog(std::string filename, std::string message){
 
 void GenerateCredentialFile(std::string filename, std::string credentials){
 	std::ofstream credfile;
-	credfile.open(filename,std::ios::out | std::ios::app);
+	credfile.open(filename,std::ios::out);
 	credfile<<credentials<<std::endl;
 	credfile.close();
 }
