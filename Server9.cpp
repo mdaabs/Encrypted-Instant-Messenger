@@ -43,7 +43,18 @@
  *	
  */
 
-//Standard C libraries
+/*void login::getkeyandiv(string t){
+    int pos=t.find("*IV");
+
+    string key=t.substr(4,pos-4);
+
+    string iv=t.substr((pos+4));
+
+
+
+
+}*/
+
 #include "Server.h"
 #include "ServerLib.cpp"
 #include "ServerDBLib.cpp"
@@ -67,8 +78,19 @@ bool dbspecified=false;
 bool outfilespecified=false;
 bool initializedatabase=false;
 bool threadsspecified=false;
-
+std::string credentialfile="Credentials.txt";
 int max_threads=30;
+std::string cred_key;
+std::string cred_iv;
+
+void GetCredentials(std::string t){
+    int pos=t.find("*IV");
+
+    cred_key=t.substr(4,pos-4);
+
+    cred_iv=t.substr((pos+4));
+
+}
 
 messagetype ParseData(std::string input){
 
@@ -542,9 +564,23 @@ int main(int argc, char * argv[]){
 			threadsspecified=true;
 			max_threads= atoi(argv[i+1]);
 		}
+		if(argv[i]==credflag){
+			std::ostringstream stream;
+			stream<<"generated new credentials"<<std::endl;
+			std::string logmessage=stream.str();
+			WriteToLog(outfile, logmessage);
+			std::string key, iv;
+			Encryption cryptobject;	
+			key=cryptobject.printKey();
+			iv=cryptobject.printIV();
+			std::string formattedcreds=FormatCredReq(key, iv);
+			GenerateCredentialFile(credentialfile, formattedcreds);
+			exit(0);
+		}
 
 	}
-
+	std::string t="hi";
+	GetCredentials(t);
 
 	if(debugmode){
 		std::cout<<"outfile: "<<outfile<<std::endl;

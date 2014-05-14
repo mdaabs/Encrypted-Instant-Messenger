@@ -33,7 +33,11 @@ std::string GetOldPassword(std::string input);
 
 std::string GetNewPassword(std::string input);
 
+std::string FormatCredReq(std::string key, std::string iv);
+
 void WriteToLog(std::string filename, std::string message);
+
+void GenerateCredentialFile(std::string filename, std::string credentials);
 
 void endprocess();
 

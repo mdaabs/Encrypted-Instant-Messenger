@@ -35,77 +35,66 @@
 #include <sstream>
 #include <iomanip>
 
-
-char * GetUserSalt(std::string username){
-sqlite3 *db;
+#include "Hash.h"
+#include "Encryption.h"
+bool UpdatePassword(std::string username, std::string newPassWord)
+{
+   sqlite3 *db;
    sqlite3_stmt * stmt;
    char *zErrMsg = 0;
    int rc;
    std::string sql;
    int nbyte;
-   int thestep;
-   char * salt="";
-  	db->open("Testdb.db", &db);
+
+   rc = sqlite3_open("Testdb.db", &db);
 
     if( rc ){
-//	if(debugmode)
       fprintf(stderr, "Can't open database: %s\n", sqlite3_errmsg(db));
       exit(0);
-   //   return false;
+      return false;
    }else{
-//	if(debugmode)
       fprintf(stderr, "Opened database successfully\n");
    }
 
-  sql = "SELECT salt FROM USERS WHERE USER_NAME == '" + username +"';";
-//	char * sqlst= (char *)sql;
-  nbyte = sql.length() + 1;
+   //Insert statment
+   sql = "UPDATE USERS SET PASSWORD_HASH = '"+ newPassWord + "' WHERE USER_NAME == '" + username + "';";
 
-  sqlite3_prepare(db, sql.c_str(), nbyte, &stmt, NULL);
+nbyte = sql.length() + 1;
+
+
+    sqlite3_prepare(db, sql.c_str(), nbyte, &stmt, NULL);
      
-  /*   thestep = sqlite3_step( stmt );
-
-    if( thestep != SQLITE_ROW)
+     if( sqlite3_step( stmt ) != SQLITE_BUSY)
      {
-//	if(debugmode)
-      fprintf(stdout, "Step failed I repeat step failed\n");
+      fprintf(stdout, "Step failed I repeat step failed2\n");
       sqlite3_close(db);
- //     return false;
-     }
-     else
-     {
-	//if(debugmode)
-       printf("%s", "its in there");
+      return false;
      }
 
     if( rc != SQLITE_OK ){
-//	if(debugmode)
          fprintf(stderr, "SQL error: %s\n", zErrMsg);
          sqlite3_free(zErrMsg);
          sqlite3_close(db);
-   //      return false;
+         return false;
       }else{
-	//if(debugmode)
-         fprintf(stdout, " user found in database successfully\n");
-
+         fprintf(stdout, "Records created successfully\n");
        }
-	
-    sqlite3_finalize(stmt);*/
-	rc=sqlite3_exec(db,sql,NULL,NULL,&zErrMsg);
+    sqlite3_finalize(stmt);
 
    sqlite3_close(db);
 
-  return salt;
+return true;
 }
 
-
 int main(){
-	std::string username;
+	std::string username, password;
 	std::cin>>username;
-
-	char * salt=GetUserSalt(username);
+	std::cin>>password;
+	const char * salt="1804289383";
+	password=generateHash(password, salt);
+	bool updated=UpdatePassword(username, password);
 	
-	std::cout<<salt<<std::endl;
+	std::cout<<updated<<std::endl;
 
 
 return 0;

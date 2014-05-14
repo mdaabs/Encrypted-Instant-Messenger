@@ -75,6 +75,7 @@ extern std::string dbflag="-b";
 extern std::string outflag="-o";
 extern std::string initializeflag="-i";
 extern std::string threadflag="-t";
+extern std::string credflag="-g";
 
 extern std::string to_delimiter="TO:";
 extern std::string from_delimiter="FROM:";

@@ -15,6 +15,13 @@ std::string FormatKeyIV(std::string key, std::string iv){
 
 }
 
+std::string FormatCredReq(std::string key, std::string iv){
+	std::string formatted_string="KEY="+key+star_delimiter+"IV="+iv;
+	if(debugmode)
+		std::cout<<"formatted message: "<<formatted_string<<std::endl;
+	return formatted_string;
+}
+
 std::string FormatOutGoingMessage(std::string username, std::string message){
 	std::string formatted_message=from_delimiter+username+star_delimiter+message;
 	if(debugmode)
@@ -37,6 +44,13 @@ void WriteToLog(std::string filename, std::string message){
 	logfile<<timestring<<std::endl;
 	logfile.close();
 
+}
+
+void GenerateCredentialFile(std::string filename, std::string credentials){
+	std::ofstream credfile;
+	credfile.open(filename,std::ios::out | std::ios::app);
+	credfile<<credentials<<std::endl;
+	credfile.close();
 }
 
 std::string GetMessage(std::string input){
