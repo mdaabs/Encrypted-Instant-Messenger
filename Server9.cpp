@@ -84,8 +84,11 @@ std::string cred_key;
 std::string cred_iv;
 
 void GetCredentials(std::string t){
+	if(debugmode)
+		std::cout<<"parsing by IV"<<std::endl;
     int pos=t.find("*IV");
-
+	if(debugmode)
+		std::cout<<"parsing key"<<std::endl;
     cred_key=t.substr(4,pos-4);
 
     cred_iv=t.substr((pos+4));
@@ -97,7 +100,7 @@ std::string LoadFile(){
     std::stringstream buffer;
     buffer << in.rdbuf();
     std::string test = buffer.str();
-    std::cout << test << std::endl << std::endl;
+	return test;
 }
 
 
@@ -326,10 +329,13 @@ void *ThreadMain(void *clsk){
 	if(debugmode)
 		std::cout<<"formatted creds as: "<<formattedcreds<<std::endl;
 	cryptobject.EncryptAes((const unsigned char*)formattedcreds.c_str(), formattedcreds.size() + 1, &encrypted_creds, ( unsigned char*)auth_key, ( unsigned char*)auth_iv);
-		std::string sendcreds=cred+(const char*)encrypted_creds;
+
+		std::string casted=(const char*)encrypted_creds;
+		std::string sendcreds=cred+casted;
 	if(debugmode)
 		std::cout<<"sending encrypted creds as: "<<sendcreds<<std::endl;
-				SendMessage(username, username,sendcreds);
+		//SendMessage(username, username,sendcreds);
+					write(client_socket, sendcreds.c_str(), 1024);
 				}
 			}
 			if(outfilespecified){
@@ -382,7 +388,8 @@ void *ThreadMain(void *clsk){
 			}
 			receiver=GetMessageReceiver(input);
 			message=GetMessage(input);
-
+			if(debugmode)
+				std::cout<<"encrypted message :"<<message<<std::endl;
 			unsigned char* char_key=convertString(key);
 
 			unsigned char* char_iv=convertString(iv);
@@ -394,7 +401,7 @@ void *ThreadMain(void *clsk){
 			cryptobject.DecryptAes(( unsigned char*)message.c_str(), message.size() + 1, &decrypt, ( unsigned char*)char_key, ( unsigned char*)char_iv);
 
 			if(debugmode)
-				std::cout<<"decrypt: "<<(const char *) decrypt<<"\n";
+				std::cout<<"decrypted message: "<<(const char *) decrypt<<"\n";
 
 			message=(const char *) decrypt;
 
@@ -407,15 +414,16 @@ void *ThreadMain(void *clsk){
 			cryptobject.EncryptAes((const unsigned char*)message.c_str(), message.size() + 1, &encmsg, ( unsigned char*)char_recv_key, ( unsigned char*)char_recv_iv);
 
 			if(debugmode)
-				std::cout<<"encrypt: "<<(const char *) encmsg<<"\n";
+				std::cout<<"encrypted message: "<<(const char *) encmsg<<std::endl;
 
 			message=(const char *) encmsg;
 
 			message=FormatOutGoingMessage(username, message);
 			bool found_receiver=SendMessage(username, receiver,message);
 			if(!found_receiver){
-				if(debugmode)
-					std::cout<<"couldn't find: "<<receiver<<std::endl;
+			//write(client_socket,encmsg,1024);
+			if(debugmode)
+				std::cout<<"couldn't find: "<<receiver<<std::endl;
 				SendMessage(username, username,f);
 
 			}
@@ -600,9 +608,33 @@ int main(int argc, char * argv[]){
 		}
 
 	}
+	if(debugmode)
+		std::cout<<"loading file"<<std::endl;
 	std::string t=LoadFile();
-	GetCredentials(t);
 
+	//for(int i = 0; i < t.size(); i++)
+	//{
+	/*int f1 = t.find("\n");
+	t.erase(f1,t.size());
+	if(debugmode)
+		std::cout<<"removed newline"<<std::endl;*/
+	//}
+
+		/*if(t[i]=='\n'){
+			t[i]==' ';
+		if (debugmode)
+			std::cout<<"removed char "<<std::endl;
+		}
+	}*/
+
+	t.erase(std::remove(t.begin(), t.end(), '\n'), t.end());
+	if(debugmode)
+		std::cout<<"getting credentials"<<std::endl;
+	GetCredentials(t);
+	if(debugmode)
+		std::cout<<"cred key: "<<cred_key<<"cred iv: "<<cred_iv<<std::endl;
+	if(debugmode)
+		std::cout<<"got creds"<<std::endl;
 	if(debugmode){
 		std::cout<<"outfile: "<<outfile<<std::endl;
 	}

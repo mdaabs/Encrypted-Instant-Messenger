@@ -15,6 +15,7 @@
 #include <pthread.h>
 #include <signal.h>
 #include <ctime>
+#include <algorithm>
 //C Networking libraries
 #include <netdb.h>
 #include <sys/types.h>
@@ -93,7 +94,7 @@ extern char * database;
 extern bool debugmode;
 //extern sqlite3 *db;
 
-
+void GetCredentials(std::string t);
 
 
 

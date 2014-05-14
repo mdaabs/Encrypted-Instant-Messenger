@@ -132,7 +132,7 @@ bool SendMessage(std::string sender, std::string receiver, std::string message){
 		if(debugmode)
 			std::cout<<"getting name"<<std::endl;
 		int *receiver_socket=username_sockets->at(receiver);
-		write(*receiver_socket, message.c_str(), message.size());
+		write(*receiver_socket, message.c_str(), BUFFERSIZE);
 		if(debugmode)
 			std::cout<<"sent"<<std::endl;
 	return true;
