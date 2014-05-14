@@ -1,46 +1,77 @@
 Messenger Encryption 
 
-Team 7: AKA 2Scoops 
+Team 7:
 
 George Bekandy
 Mario Daaboul
 Allen Friedman
 Demitrious Jackson
-Jonathan Nguyen (bigjon92)
+Jonathan Nguyen
 Nicole Cote
 
 Project Agreement
 
 COMPONENTS
 
-1.	Accounts
--Create/access all user accounts with account information.
-•	Username
-•	Password
-•	History
-•	Friends
-•	IP
+Accounts
+  -Create/access all user accounts with account information.
+    Username
+    Password
+    History
+    Friends
+    IP
 
-2.	Read
--Read user typed messages and send to Encryption.
+Read
+  -Read user typed messages and send to Encryption.
 
-3.	Write
--Display user typed messages after Decryption.
+Write
+  -Display user typed messages after Decryption.
 
-4.	Connect
--Connect users IP addresses to each other for messaging.
+Connect
+  -Connect users IP addresses to each other for messaging.
 
-5.	Encryption/Decryption
--Encrypt or decrypt messages for secure messaging between users.
+Encryption/Decryption
+  -Encrypt or decrypt messages for secure messaging between users.
+  -Will be using an existing library for this.
 
-6.	GUI Message Box
--Contains message box for user’s conversation for display. 
--Contains “Friends List” for users.
--Contains “Text Box” for entering and editing message before pressing “send”.
--Tabs for multiple.
+GUI Message Box
+  -Contains message box for user’s conversation for display. 
+  -Contains “Friends List” for users.
+  -Contains “Text Box” for entering and editing message before pressing “send”.
+  -Tabs for multiple conversations.
 
 USER INPUT
-1.	User message that gets sent to other user.
-2.	Find Users.
-3.	Edit Friends.
-4.	View history.
+
+  -User message that gets sent to other user.
+  -Find Users.
+  -Edit Friends.
+  -View history.
+
+INTERFACE
+
+  -User opens messenger client, and signs in with his/her username and password:
+    -If no internet access, error message is displayed
+    -If username or password incorrect, error message is displayed. User can try to sign in again
+    -If correct username and password, user is signed in
+  -User is signed in:
+    -Client will contact server to retrieve IP address from user’s computer to ping other users. 
+     This will allow user’s computer to obtain a list of contacts that are online as well as update 
+     his/her friend’s list to display that he/she is now online.
+  -User selects a contact from friend’s list to send a message
+  -User can sign out of messenger client:
+    -Client will contact server to retrieve IP address from user’s computer to ping other users. 
+     This will allow user’s computer to obtain a list of contacts that are online as well as 
+     update his/her friend’s list to display that he/she is now offline.
+
+GUI
+
+  -Rectangular box:
+    -Friend’s list to the left
+    -To the right of friend’s list:
+      Conversation box
+      Text box: below conversation box, to write messages to show up in conversation box
+    -Tabs to hold different conversations
+
+
+
+
