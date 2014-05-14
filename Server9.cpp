@@ -322,11 +322,13 @@ void *ThreadMain(void *clsk){
 	unsigned char* auth_iv=convertString(cred_iv);
 
 	unsigned char *encrypted_creds = NULL;
-				std::string formattedcreds=FormatCredReq(key, iv);
-
+	std::string formattedcreds=FormatCredReq(key, iv);
+	if(debugmode)
+		std::cout<<"formatted creds as: "<<formattedcreds<<std::endl;
 	cryptobject.EncryptAes((const unsigned char*)formattedcreds.c_str(), formattedcreds.size() + 1, &encrypted_creds, ( unsigned char*)auth_key, ( unsigned char*)auth_iv);
 		std::string sendcreds=cred+(const char*)encrypted_creds;
-
+	if(debugmode)
+		std::cout<<"sending encrypted creds as: "<<sendcreds<<std::endl;
 				SendMessage(username, username,sendcreds);
 				}
 			}
