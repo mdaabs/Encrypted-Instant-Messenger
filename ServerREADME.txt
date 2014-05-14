@@ -35,4 +35,16 @@ SECURITY:
 This application uses two layers of AES symmetric key encryption.  When the server is ran with the -g flag, it will generate a key iv pair and store them in a file.  These credentials are static, and too be distributed to each user.  The best format for this is either via thumb drive, or by using the VSFTP protocal to distribute the credential file.  This decision is left up to the network administrator.  This credential file is loaded into both the server and client, and used to encrypt the session key iv pair that is distributed to clients upon login.  This protects the session kery iv pair from man in the middle attacks or snooping, as anyone listening on the wire will get an encrypted string, which they won't be able to decrypt without the credential file.  If the credential file or system itself becomes compromised, the network admin just needs to run ./Server -g to generate a brand new set of credentials, and then the admin just has to distribute them in whatever secure format they see fit.
 
 
+Notable issues:
+The server does not dynamically log users off, so if a client drops unexpectedly, the server will still consider them logged on.
+
+The database locks, limiting add user functionality to 1 person server session, and making changing passwords impossible.
+
+
+
+
+
+
+
+
 
