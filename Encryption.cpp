@@ -6,34 +6,28 @@
 #include <iomanip>
 #include "Encryption.h"
 
-EVP_PKEY* Encryption::localKeyPair;
-
 Encryption::Encryption() {
-	localKeyPair = NULL;
-	remotePubKey = NULL;
 
 	init();
 }
 
 Encryption::~Encryption() {
-	EVP_PKEY_free(remotePubKey);
 	
-	// EVP_CIPHER_CTX_cleanup(EncryptRsaCtx);
 	EVP_CIPHER_CTX_cleanup(EncryptAesCtx);
 
-	// EVP_CIPHER_CTX_cleanup(DecryptRsaCtx);
 	EVP_CIPHER_CTX_cleanup(DecryptAesCtx);
 
-	// free(EncryptRsaCtx);
 	free(EncryptAesCtx);
 	
-	// free(DecryptRsaCtx);
 	free(DecryptAesCtx);
 	
 	free(aesKey);
 	free(aesIV);
 }
 
+// Encrypts whatever is being sent over the wire. msg is the original plaintext, msgLen
+// is the length of it, encMsg is where the output will be stored, aesKey and aesIV are what
+// are used at the key and IV to encrypt.
 int Encryption::EncryptAes(const unsigned char *msg, size_t msgLen, unsigned char **encMsg, unsigned char *aesKey, unsigned char *aesIV) {
 	size_t blockLen = 0;
 	size_t encMsgLen = 0;
@@ -64,6 +58,9 @@ int Encryption::EncryptAes(const unsigned char *msg, size_t msgLen, unsigned cha
 	return encMsgLen + blockLen;
 }
 
+// Decrypts whatever is being sent over the wire. encMsg is the original encrypted message, enc msgLen
+// is the length of it, decMsg is where the output will be stored, aesKey and aesIV are what
+// are used at the key and IV to decrypt.
 int Encryption::DecryptAes(unsigned char *encMsg, size_t encMsgLen, unsigned char **decMsg, unsigned char *aesKey, unsigned char *aesIV) {
 	size_t decLen = 0;
 	size_t blockLen = 0;
@@ -98,10 +95,8 @@ int Encryption::DecryptAes(unsigned char *encMsg, size_t encMsgLen, unsigned cha
 // Initializes the keys that are going to be used
 int Encryption::init() {
 	// initialize
-	// EncryptRsaCtx = (EVP_CIPHER_CTX*)malloc(sizeof(EVP_CIPHER_CTX));
 	EncryptAesCtx = (EVP_CIPHER_CTX*)malloc(sizeof(EVP_CIPHER_CTX));
 
-	// DecryptRsaCtx = (EVP_CIPHER_CTX*)malloc(sizeof(EVP_CIPHER_CTX));
 	DecryptAesCtx = (EVP_CIPHER_CTX*)malloc(sizeof(EVP_CIPHER_CTX));
 
 	// malloc check
@@ -109,15 +104,9 @@ int Encryption::init() {
 		return -1;
 	}
 
-	// Init these here to make valgrind happy
-    	// EVP_CIPHER_CTX_init(EncryptRsaCtx);
     	EVP_CIPHER_CTX_init(EncryptAesCtx);
  
-    	// EVP_CIPHER_CTX_init(DecryptRsaCtx);
     	EVP_CIPHER_CTX_init(DecryptAesCtx);
-
-	// free context
-	//EVP_PKEY_CTX_free(ctx);
 
 	// init AES
 	aesKey = (unsigned char*)malloc(AES_KEYLEN/8);
@@ -164,27 +153,13 @@ int Encryption::init() {
     	return 0;
 }
 
-int Encryption::writeKeyToFile(FILE *fd, int key) {
-	switch(key) {
-		// write the aes key to file
-		case KEY_AES:
-			fwrite(aesKey, 1, AES_KEYLEN, fd);
-			break;
-		// write te aes IV to file
-		case KEY_AES_IV:
-			fwrite(aesIV, 1, AES_KEYLEN, fd);
-			break;
-		default:
-			return -1;
-	}
-	return 0;
-}
-
+// get Length of the AES key
 int Encryption::getAesKey(unsigned char **aesKey) {
 	*aesKey = this->aesKey;
 	return AES_KEYLEN/8;
 }
 
+// set length of AES key
 int Encryption::setAesKey(unsigned char *aesKey, size_t aesKeyLen) {
 	if ((int)aesKeyLen != AES_KEYLEN/8) {
 		return -1;
@@ -195,11 +170,13 @@ int Encryption::setAesKey(unsigned char *aesKey, size_t aesKeyLen) {
 	return 0;
 }
 
+// get length of AES IV
 int Encryption::getAesIV(unsigned char **aesIV) {
 	*aesIV = this->aesIV;
 	return AES_KEYLEN/16;
 }
 
+// set length of AES IV
 int Encryption::setAesIV(unsigned char *aesIV, size_t aesIVLen) {
 	if ((int)aesIVLen != AES_KEYLEN/16) {
 		return -1;
@@ -210,7 +187,8 @@ int Encryption::setAesIV(unsigned char *aesIV, size_t aesIVLen) {
 	return 0;
 }
 
-// returns key as string to send to db, don't confuse with
+// returns key as string to be used, is converted later.
+// Do not confuse with the function 
 // getAesKey which is used for key length
 std::string Encryption::printKey() {
   size_t aesLength = getAesKey(&aesKey);
@@ -224,6 +202,9 @@ std::string Encryption::printKey() {
   return s.str();
 }
 
+// returns IV as string to be used, is converted later.
+// Do not confuse with the function 
+// getAesIV which is used for IV length
 std::string Encryption::printIV() {
   size_t IVlength = getAesIV(&aesIV);
   std::stringstream s;
